@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   pdbId: string;
@@ -71,6 +71,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     rep: "cartoon",
     color: "chainname",
   });
+  const safetyTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [nglReady,    setNglReady]    = useState(false);
   const [loading,     setLoading]     = useState(true);
@@ -113,6 +114,22 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     });
     stageRef.current = stage;
 
+    // ── WebGL context-loss detection ────────────────────────────────
+    const canvas = stage.viewer?.renderer?.domElement as HTMLCanvasElement | undefined;
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      console.warn("[NGL] WebGL context lost");
+      setLoadError("Se perdió el contexto WebGL. Pulse Reiniciar.");
+    };
+    const onContextRestored = () => {
+      console.log("[NGL] WebGL context restored — reiniciando escena…");
+      setStageKey((k) => k + 1);
+    };
+    if (canvas) {
+      canvas.addEventListener("webglcontextlost", onContextLost);
+      canvas.addEventListener("webglcontextrestored", onContextRestored);
+    }
+
     const onResize = () => stage.handleResize();
     window.addEventListener("resize", onResize);
 
@@ -144,6 +161,11 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     return () => {
       window.removeEventListener("resize", onResize);
       ro.disconnect();
+      if (canvas) {
+        canvas.removeEventListener("webglcontextlost", onContextLost);
+        canvas.removeEventListener("webglcontextrestored", onContextRestored);
+      }
+      if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
       compRef.current  = null;
       stageRef.current = null;
       try { stage.dispose(); } catch (_) { /* ignore */ }
@@ -169,7 +191,17 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
 
       // Step B — add new representation
       try {
+        const reprCountBefore = comp.reprList?.length ?? 0;
         comp.addRepresentation(rep, buildParams(rep, color));
+        // Verify NGL actually committed the representation
+        if ((comp.reprList?.length ?? 0) <= reprCountBefore) {
+          console.warn("[NGL] addRepresentation did not increase reprList for", rep);
+          try { comp.removeAllRepresentations(); } catch (_) { /* ignore */ }
+          try {
+            comp.addRepresentation(prevOk.rep, buildParams(prevOk.rep, prevOk.color));
+          } catch (_) { /* ignore */ }
+          return false;
+        }
         lastOkRef.current = { rep, color };
         return true;
       } catch (addErr) {
@@ -195,6 +227,13 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     if (repBusy || !compRef.current) return;
     setRepBusy(true);
     setRepError(null);
+
+    // Safety net: reset repBusy if heavy NGL work blocks the thread
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+    safetyTimerRef.current = setTimeout(() => {
+      setRepBusy(false);
+      setRepError("La representación tardó demasiado. Pulse Reiniciar.");
+    }, 15_000);
 
     // First rAF → React commits the busy state to DOM
     requestAnimationFrame(() => {
@@ -232,6 +271,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
           setActiveRep(lastOkRef.current.rep);
           setColorScheme(lastOkRef.current.color);
         } finally {
+          if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
           setRepBusy(false);
         }
       });
@@ -242,6 +282,12 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     if (repBusy || !compRef.current) return;
     setRepBusy(true);
     setRepError(null);
+
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+    safetyTimerRef.current = setTimeout(() => {
+      setRepBusy(false);
+      setRepError("Cambio de color tardó demasiado. Pulse Reiniciar.");
+    }, 15_000);
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -258,6 +304,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
           setColorScheme(lastOkRef.current.color);
           setRepError("Error inesperado al cambiar esquema de color.");
         } finally {
+          if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
           setRepBusy(false);
         }
       });
@@ -359,6 +406,15 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition-all disabled:opacity-40"
           >
             ⌖ Centrar
+          </button>
+
+          <button
+            onClick={() => setStageKey(k => k + 1)}
+            disabled={loading}
+            title="Reiniciar el visor 3D completamente"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition-all disabled:opacity-40"
+          >
+            ↺ Reiniciar
           </button>
         </div>
       </div>
