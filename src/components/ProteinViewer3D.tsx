@@ -90,7 +90,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     if (window.NGL) { setNglReady(true); return; }
 
     const s = document.createElement("script");
-    s.src     = "https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.40/dist/ngl.js";
+    s.src     = "https://cdn.jsdelivr.net/npm/ngl@2.3.1/dist/ngl.js";
     s.onload  = () => setNglReady(true);
     s.onerror = () => setLoadError("No se pudo cargar el visualizador 3D (CDN).");
     document.head.appendChild(s);
@@ -108,10 +108,18 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     setColorScheme("chainname");
     lastOkRef.current = { rep: "cartoon", color: "chainname" };
 
-    const stage = new window.NGL.Stage(containerRef.current, {
-      backgroundColor: "#030712",   // THREE.js no acepta "transparent"; usamos el color del fondo del sitio
-      quality: "medium",
-    });
+    let stage;
+    try {
+      stage = new window.NGL.Stage(containerRef.current, {
+        backgroundColor: "#030712",
+        quality: "medium",
+      });
+    } catch (stageErr) {
+      console.error("[NGL] Stage creation failed:", stageErr);
+      setLoadError("No se pudo inicializar el visor 3D. Intente recargar la página.");
+      setLoading(false);
+      return;
+    }
     stageRef.current = stage;
 
     // ── WebGL context-loss detection ────────────────────────────────
@@ -497,8 +505,8 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
           </div>
         )}
 
-        {/* NGL canvas */}
-        <div ref={containerRef} className="w-full h-full" style={{ minHeight: 400 }} />
+        {/* NGL canvas — key forces full DOM remount on reinicio */}
+        <div key={stageKey} ref={containerRef} className="w-full h-full" style={{ minHeight: 400 }} />
 
         {/* Status bar */}
         {!loading && !loadError && (
