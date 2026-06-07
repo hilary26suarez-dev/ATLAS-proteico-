@@ -85,16 +85,17 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-6">
-            <span className="gradient-text-white block">El Atlas Proteico</span>
-            <span className="gradient-text-cyan block">que tu facultad</span>
-            <span className="gradient-text-white block">no tiene</span>
+            <span className="gradient-text-white block">La ciencia molecular</span>
+            <span className="gradient-text-cyan block">es un lenguaje</span>
+            <span className="gradient-text-white block">para todos</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
             Visualiza en{" "}
             <span className="text-cyan-400 font-semibold">3D interactivo</span> las proteínas que hacen posible la{" "}
             <span className="text-amber-400 font-semibold">Nutrición Parenteral</span>.
-            Contexto clínico real, modos Estudiante e Investigador. Gratis, siempre.
+            Toca la molécula detrás de cada terapia — con contexto clínico real,
+            modos Estudiante e Investigador. Siempre gratis.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -146,7 +147,7 @@ export default function Home() {
             </div>
           </div>
           <a
-            href="https://nutrivida.vercel.app"
+            href="https://nutri-vida-khaki.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
             className="flex-shrink-0 px-6 py-3 rounded-xl border border-cyan-500/30 text-cyan-400 font-medium hover:bg-cyan-500/10 transition-all text-sm"
@@ -254,11 +255,11 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-violet-500/5 pointer-events-none" />
             <div className="relative z-10">
               <div className="text-5xl mb-6">🧬</div>
-              <h2 className="text-4xl font-black text-white mb-4">La biotecnología al alcance de todos</h2>
+              <h2 className="text-4xl font-black text-white mb-4">La ciencia molecular es tuya</h2>
               <p className="text-slate-400 text-lg mb-8 max-w-2xl mx-auto">
-                Ninguna herramienta en las facultades de salud permite al estudiante
-                &quot;tocar&quot; la estructura afectada por una terapia intravenosa.{" "}
-                <span className="text-white font-medium">Hasta ahora.</span>
+                La bioquímica y la bioinformática no deben tener barreras.
+                Toca la molécula, entiende la terapia, conecta la ciencia con la práctica —
+                <span className="text-white font-medium"> porque el conocimiento es para todos.</span>
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

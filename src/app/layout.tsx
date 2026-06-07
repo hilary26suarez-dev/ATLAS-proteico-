@@ -45,7 +45,7 @@ export default function RootLayout({
               </div>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-500">
-              <span>Conectado con{" "}<a href="https://nutrivida.vercel.app" className="text-cyan-400 hover:text-cyan-300 transition-colors">NutriVida NP</a></span>
+              <span>Conectado con{" "}<a href="https://nutri-vida-khaki.vercel.app" className="text-cyan-400 hover:text-cyan-300 transition-colors">NutriVida NP</a></span>
               <span>·</span>
               <span>Datos: RCSB PDB · UniProt · AlphaFold DB</span>
             </div>

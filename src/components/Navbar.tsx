@@ -57,7 +57,7 @@ export default function Navbar() {
             </Link>
           ))}
           <a
-            href="https://nutrivida.vercel.app"
+            href="https://nutri-vida-khaki.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-3 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"
@@ -98,7 +98,7 @@ export default function Navbar() {
             </Link>
           ))}
           <a
-            href="https://nutrivida.vercel.app"
+            href="https://nutri-vida-khaki.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 px-4 py-3 rounded-lg text-sm font-medium text-center bg-gradient-to-r from-cyan-500 to-blue-600 text-white"
