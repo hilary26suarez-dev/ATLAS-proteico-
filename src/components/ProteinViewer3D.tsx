@@ -34,7 +34,6 @@ const REPRESENTATIONS: {
 const SURFACE_ONLY = new Set(["electrostatic", "hydrophobicity"]);
 
 function buildParams(rep: RepresentationType, colorScheme: string): Record<string, unknown> {
-  // If a surface-only color is requested on a non-surface rep → fall back to chainname
   const color = SURFACE_ONLY.has(colorScheme) && rep !== "surface" ? "chainname" : colorScheme;
 
   switch (rep) {
@@ -42,17 +41,14 @@ function buildParams(rep: RepresentationType, colorScheme: string): Record<strin
       return { colorScheme: color, quality: "medium" };
 
     case "spacefill":
-      // radiusType:"vdw" = van der Waals radii — the correct NGL param for spacefill
-      // radiusScale:0.8 — slightly smaller than 1.0 so the view isn't too crowded
-      // sphereDetail:1  — low polygon count, avoids WebGL memory issues on big proteins
-      return { colorScheme: color, radiusType: "vdw", radiusScale: 0.8, sphereDetail: 1 };
+      // Use ONLY what NGL 2.x actually accepts — no extra params that could silently break
+      return { colorScheme: color };
 
     case "surface":
-      // useWorker:false avoids a silent web-worker message failure on some browsers
       return { colorScheme: color, roughness: 0.5, metalness: 0.0, opacity: 0.88, useWorker: false };
 
     case "ball+stick":
-      return { colorScheme: color, aspectRatio: 1.5, bondScale: 0.3 };
+      return { colorScheme: color, aspectRatio: 1.5 };
 
     case "licorice":
       return { colorScheme: color };
@@ -82,6 +78,8 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
   const [activeRep,   setActiveRep]   = useState<RepresentationType>("cartoon");
   const [spinning,    setSpinning]    = useState(true);
   const [colorScheme, setColorScheme] = useState("chainname");
+  // Increment to force full stage recreation (escape hatch when viewer gets stuck)
+  const [stageKey,    setStageKey]    = useState(0);
 
   // ── 1. Load NGL from CDN once ──────────────────────────────────────
   useEffect(() => {
@@ -95,7 +93,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     document.head.appendChild(s);
   }, []);
 
-  // ── 2. Init stage + load PDB whenever pdbId changes ───────────────
+  // ── 2. Init stage + load PDB whenever pdbId or stageKey changes ──
   useEffect(() => {
     if (!nglReady || !containerRef.current) return;
 
@@ -140,28 +138,46 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
       try { stage.dispose(); } catch (_) { /* ignore */ }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nglReady, pdbId]);
+  }, [nglReady, pdbId, stageKey]);
 
   // ── 3. Core: apply representation synchronously ───────────────────
-  // Returns true on success, false on failure (UI is restored to lastOk)
+  // Separates remove + add into two independent try/catch blocks.
+  // Verifies via reprList that NGL actually committed the representation.
   const applyDirect = useCallback(
     (comp: any, rep: RepresentationType, color: string): boolean => {
       if (!comp) return false;
+      const prevOk = { ...lastOkRef.current };
+
+      // Step A — clear existing representations (may fail if prev rep was broken)
       try {
         comp.removeAllRepresentations();
+      } catch (removeErr) {
+        console.warn("[NGL] removeAllRepresentations failed:", removeErr);
+        // Continue — at worst we end up stacking, but we need to try the add
+      }
+
+      // Step B — add new representation and verify it landed
+      try {
         comp.addRepresentation(rep, buildParams(rep, color));
+
+        // NGL adds synchronously to reprList; if empty, the add did nothing
+        const reprCount: number = comp.reprList?.length ?? 0;
+        if (reprCount === 0) {
+          throw new Error(`NGL accepted "${rep}" but produced no geometry`);
+        }
+
         lastOkRef.current = { rep, color };
         return true;
-      } catch (err) {
-        console.warn("[NGL] addRepresentation failed:", rep, err);
-        // Best-effort restore to last known-good rep
+      } catch (addErr) {
+        console.warn("[NGL] addRepresentation failed or produced nothing:", rep, addErr);
+
+        // Restore to last known-good (separate try so remove failures don't block restore)
+        try { comp.removeAllRepresentations(); } catch (_) { /* ignore */ }
         try {
-          comp.removeAllRepresentations();
-          comp.addRepresentation(
-            lastOkRef.current.rep,
-            buildParams(lastOkRef.current.rep, lastOkRef.current.color)
-          );
-        } catch (_) { /* truly stuck — leave viewer empty */ }
+          comp.addRepresentation(prevOk.rep, buildParams(prevOk.rep, prevOk.color));
+        } catch (restoreErr) {
+          console.error("[NGL] restore also failed — viewer may need reiniciar:", restoreErr);
+        }
         return false;
       }
     },
@@ -180,24 +196,40 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     requestAnimationFrame(() => {
       // Second rAF → browser has painted the overlay; safe to do heavy work
       requestAnimationFrame(() => {
-        const ok = applyDirect(compRef.current, rep, colorScheme);
-
-        if (ok) {
-          setActiveRep(rep);
-          // If current color is surface-only but we're now on a non-surface rep,
-          // reset color selector to chainname
-          if (SURFACE_ONLY.has(colorScheme) && rep !== "surface") {
-            setColorScheme("chainname");
+        try {
+          // guard: ensure rep is a supported value
+          const allowed = new Set<RepresentationType>(["cartoon", "spacefill", "surface", "ball+stick", "licorice"]);
+          if (!allowed.has(rep)) {
+            setRepError(`Representación desconocida: ${rep}`);
+            setActiveRep(lastOkRef.current.rep);
+            setColorScheme(lastOkRef.current.color);
+            return;
           }
-          setRepError(null);
-        } else {
-          // Snap UI back to the last successful state
+
+          const ok = applyDirect(compRef.current, rep, colorScheme);
+
+          if (ok) {
+            setActiveRep(rep);
+            // If current color is surface-only but we're now on a non-surface rep,
+            // reset color selector to chainname
+            if (SURFACE_ONLY.has(colorScheme) && rep !== "surface") {
+              setColorScheme("chainname");
+            }
+            setRepError(null);
+          } else {
+            // Snap UI back to the last successful state
+            setActiveRep(lastOkRef.current.rep);
+            setColorScheme(lastOkRef.current.color);
+            setRepError(`"${rep}" no está disponible para esta proteína. Volviendo a ${lastOkRef.current.rep}.`);
+          }
+        } catch (unexpected) {
+          console.error("Unexpected error while changing representation:", unexpected);
+          setRepError("Error inesperado al cambiar la representación.");
           setActiveRep(lastOkRef.current.rep);
           setColorScheme(lastOkRef.current.color);
-          setRepError(`"${rep}" no está disponible para esta proteína. Volviendo a ${lastOkRef.current.rep}.`);
+        } finally {
+          setRepBusy(false);
         }
-
-        setRepBusy(false);
       });
     });
   }
@@ -209,14 +241,21 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const ok = applyDirect(compRef.current, activeRep, color);
-        if (ok) {
-          setColorScheme(color);
-        } else {
+        try {
+          const ok = applyDirect(compRef.current, activeRep, color);
+          if (ok) {
+            setColorScheme(color);
+          } else {
+            setColorScheme(lastOkRef.current.color);
+            setRepError("Esquema de color no disponible. Restaurado.");
+          }
+        } catch (err) {
+          console.error("Unexpected error while changing color:", err);
           setColorScheme(lastOkRef.current.color);
-          setRepError("Esquema de color no disponible. Restaurado.");
+          setRepError("Error inesperado al cambiar esquema de color.");
+        } finally {
+          setRepBusy(false);
         }
-        setRepBusy(false);
       });
     });
   }
@@ -324,8 +363,14 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
           <span>⚠</span>
           <span>{repError}</span>
           <button
+            onClick={() => { setStageKey(k => k + 1); setRepError(null); }}
+            className="ml-2 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 transition-colors text-amber-300 whitespace-nowrap"
+          >
+            ↺ Reiniciar
+          </button>
+          <button
             onClick={() => setRepError(null)}
-            className="ml-auto text-amber-600 hover:text-amber-400"
+            className="ml-1 text-amber-600 hover:text-amber-400"
           >
             ✕
           </button>

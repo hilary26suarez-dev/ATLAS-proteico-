@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import dynamic from "next/dynamic";
-import ModeToggle from "./ModeToggle";
+import { useState } from "react";
+import BiblioprotePanel from "./BiblioprotePanel";
 import HPAPanel from "./HPAPanel";
+import ModeToggle from "./ModeToggle";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
 
 const ProteinViewer3D = dynamic(() => import("./ProteinViewer3D"), {
@@ -192,6 +193,9 @@ export default function ProteinDetailClient({ protein, moduleColor: mc }: Props)
                   ))}
                 </div>
               </div>
+
+              {/* Biblioprote: muestra artículo PubMed (abstract + DOI) si existe pubmedId */}
+              <BiblioprotePanel pubmedId={protein.pubmedId} />
 
               {/* Human Protein Atlas live data */}
               <HPAPanel gene={protein.gene} uniprotId={protein.uniprotId} />
