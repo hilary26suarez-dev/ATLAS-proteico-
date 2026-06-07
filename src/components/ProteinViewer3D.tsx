@@ -24,7 +24,7 @@ const REPRESENTATIONS: {
   desc: string;
 }[] = [
   { label: "Cartoon",    value: "cartoon",    mode: "both",       desc: "Estructura secundaria (hélices α y láminas β)" },
-  { label: "Space Fill", value: "spacefill",  mode: "both",       desc: "Esferas de van der Waals — modelo CPK" },
+  { label: "Space Fill", value: "spacefill",  mode: "both",       desc: "Esferas Cα — forma y topología de la cadena" },
   { label: "Superficie", value: "surface",    mode: "researcher", desc: "Superficie molecular accesible al solvente" },
   { label: "Ball+Stick", value: "ball+stick", mode: "researcher", desc: "Átomos y enlaces individuales" },
   { label: "Licorice",   value: "licorice",   mode: "researcher", desc: "Cadenas laterales y ligandos" },
@@ -41,8 +41,10 @@ function buildParams(rep: RepresentationType, colorScheme: string): Record<strin
       return { colorScheme: color, quality: "medium" };
 
     case "spacefill":
-      // Use ONLY what NGL 2.x actually accepts — no extra params that could silently break
-      return { colorScheme: color };
+      // sele:".CA" = solo átomos C-alfa. Renderizar todos los átomos como esferas VDW
+      // puede agotar la memoria WebGL en proteínas grandes (>200 residuos) → pérdida de contexto.
+      // C-alfa muestra la forma y continuidad de la cadena sin saturar la GPU.
+      return { colorScheme: color, sele: ".CA" };
 
     case "surface":
       return { colorScheme: color, roughness: 0.5, metalness: 0.0, opacity: 0.88, useWorker: false };
@@ -156,16 +158,9 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
         // Continue — at worst we end up stacking, but we need to try the add
       }
 
-      // Step B — add new representation and verify it landed
+      // Step B — add new representation
       try {
         comp.addRepresentation(rep, buildParams(rep, color));
-
-        // NGL adds synchronously to reprList; if empty, the add did nothing
-        const reprCount: number = comp.reprList?.length ?? 0;
-        if (reprCount === 0) {
-          throw new Error(`NGL accepted "${rep}" but produced no geometry`);
-        }
-
         lastOkRef.current = { rep, color };
         return true;
       } catch (addErr) {
@@ -324,6 +319,8 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
         <div className="flex gap-1.5 ml-auto">
           {mode === "researcher" && (
             <select
+              id="color-scheme-select"
+              name="color-scheme-select"
               value={colorOptions.find((o) => o.value === colorScheme) ? colorScheme : "chainname"}
               onChange={(e) => changeColor(e.target.value)}
               disabled={repBusy || loading}
