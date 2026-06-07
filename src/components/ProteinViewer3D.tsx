@@ -108,7 +108,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     lastOkRef.current = { rep: "cartoon", color: "chainname" };
 
     const stage = new window.NGL.Stage(containerRef.current, {
-      backgroundColor: "transparent",
+      backgroundColor: "#030712",   // THREE.js no acepta "transparent"; usamos el color del fondo del sitio
       quality: "medium",
     });
     stageRef.current = stage;
@@ -116,16 +116,25 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     const onResize = () => stage.handleResize();
     window.addEventListener("resize", onResize);
 
+    // ResizeObserver para recalcular canvas cuando React cambia el layout
+    const ro = new ResizeObserver(() => stage.handleResize());
+    ro.observe(containerRef.current);
+
     const url = `https://files.rcsb.org/download/${pdbId.toUpperCase()}.pdb`;
 
     stage
       .loadFile(url, { defaultRepresentation: false })
       .then((comp: any) => {
         compRef.current = comp;
+        stage.handleResize();           // tamaño correcto antes de renderizar
         applyDirect(comp, "cartoon", "chainname");
         comp.autoView();
         setLoading(false);
-        stage.setSpin([0, 1, 0], 0.005);
+        requestAnimationFrame(() => {   // después de que React quite el overlay de carga
+          stage.handleResize();
+          comp.autoView();
+          stage.setSpin([0, 1, 0], 0.005);
+        });
       })
       .catch(() => {
         setLoadError(`Estructura "${pdbId.toUpperCase()}" no disponible en RCSB PDB.`);
@@ -134,7 +143,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
 
     return () => {
       window.removeEventListener("resize", onResize);
-      // Null refs BEFORE dispose so any stale callbacks don't use them
+      ro.disconnect();
       compRef.current  = null;
       stageRef.current = null;
       try { stage.dispose(); } catch (_) { /* ignore */ }
