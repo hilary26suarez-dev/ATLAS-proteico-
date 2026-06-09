@@ -36,6 +36,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full`}>
+      <head>
+        {/* Preconnect — establece conexión TCP/TLS con CDNs antes de que JS pida los recursos */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://files.rcsb.org"   crossOrigin="anonymous" />
+        {/* Preload NGL — descarga el script mientras el HTML se parsea (ahorra ~600ms) */}
+        <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/ngl@2.3.1/dist/ngl.js" />
+      </head>
       <body className="min-h-full flex flex-col antialiased" style={{ background: "var(--bg)", color: "var(--text)" }}>
         <Navbar />
         <main className="flex-1">{children}</main>

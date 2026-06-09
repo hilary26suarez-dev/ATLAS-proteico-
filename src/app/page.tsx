@@ -60,13 +60,6 @@ export default function Home() {
             {/* ── Columna izquierda: contenido ── */}
             <div className="flex flex-col justify-center order-2 lg:order-1">
 
-              {/* Línea terminal */}
-              <div className="terminal-line mb-7">
-                <span className="terminal-prompt">$</span>
-                <span className="terminal-cmd">atlas_proteico --init</span>
-                <span className="terminal-cursor">▊</span>
-              </div>
-
               {/* Badge */}
               <div className="label-teal mb-8 w-fit">
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot"
@@ -329,24 +322,37 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: "⚗️", title: "3D desde RCSB PDB",    desc: "Estructuras cristalográficas reales. Rota, acerca y explora en tu navegador.", color: "var(--teal)" },
-              { icon: "🎓", title: "Modo Estudiante",       desc: "Lenguaje claro, cartoon visual y escenarios clínicos de NP.", color: "var(--amber)" },
-              { icon: "🔬", title: "Modo Investigador",     desc: "Superficies, ligandos, AlphaFold DB, HPA en vivo, ProteinMPNN.", color: "var(--purple)" },
-              { icon: "💉", title: "Contexto Clínico NP",   desc: "Cada proteína conectada a un parámetro real de tu fórmula parenteral.", color: "var(--electric)" },
-              { icon: "📚", title: "Biblioprote",           desc: "Abstract y DOI de PubMed directamente en la ficha de cada proteína.", color: "var(--teal)" },
-              { icon: "🌐", title: "Open Science",          desc: "UniProt, RCSB, AlphaFold, PubMed. Ciencia abierta, sin barreras.", color: "var(--amber)" },
-            ].map((f) => (
-              <div key={f.title} className="p-6 rounded-xl"
-                style={{ background: "var(--bg-card)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                <div className="text-2xl mb-3">{f.icon}</div>
-                <h3 className="font-display font-bold text-base mb-2" style={{ color: f.color }}>
-                  {f.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
+              { icon: "⚗️", title: "3D desde RCSB PDB",    desc: "Estructuras cristalográficas reales. Rota, acerca y explora en tu navegador.", color: "var(--teal)",     href: null },
+              { icon: "🎓", title: "Modo Estudiante",       desc: "Lenguaje claro, cartoon visual y escenarios clínicos de NP.", color: "var(--amber)",   href: null },
+              { icon: "🔬", title: "Modo Investigador",     desc: "Superficies, ligandos, AlphaFold DB, HPA en vivo, ProteinMPNN.", color: "var(--purple)",  href: null },
+              { icon: "🧲", title: "Docking Molecular",     desc: "Visualiza cómo las moléculas se acoplan a proteínas. AutoDock Vina y simulación interactiva.", color: "var(--electric)", href: "/docking" },
+              { icon: "🧠", title: "Quiz de Proteínas",     desc: "Pon a prueba tu conocimiento con preguntas clínicas sobre las proteínas del atlas.", color: "var(--teal)", href: "/quiz" },
+              { icon: "🌐", title: "Open Science",          desc: "UniProt, RCSB, AlphaFold, PubMed. Ciencia abierta, sin barreras.", color: "var(--amber)",   href: null },
+            ].map((f) => {
+              const inner = (
+                <>
+                  <div className="text-2xl mb-3">{f.icon}</div>
+                  <h3 className="font-display font-bold text-base mb-2" style={{ color: f.color }}>
+                    {f.title}
+                    {f.href && <span className="ml-2 text-xs opacity-60">→</span>}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    {f.desc}
+                  </p>
+                </>
+              );
+              return f.href ? (
+                <Link key={f.title} href={f.href} className="p-6 rounded-xl card-hover block"
+                  style={{ background: "var(--bg-card)", border: `1px solid ${f.color}22` }}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={f.title} className="p-6 rounded-xl"
+                  style={{ background: "var(--bg-card)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  {inner}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
