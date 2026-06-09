@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const viewport: Viewport = {
-  themeColor: "#010c18",
+  themeColor: "#0A0A0F",
   width: "device-width",
   initialScale: 1,
 };
@@ -14,6 +14,11 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space",
   weight: ["400", "500", "600", "700"],
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["300", "400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,40 +35,72 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${spaceGrotesk.variable} h-full`}>
+    <html lang="es" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased" style={{ background: "var(--bg)", color: "var(--text)" }}>
         <Navbar />
         <main className="flex-1">{children}</main>
 
-        <footer className="border-t mt-16 py-10" style={{ borderColor: "rgba(0,219,160,0.08)" }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black font-display"
-                style={{ background: "var(--teal)", color: "var(--bg)" }}>
-                AP
-              </div>
-              <div>
-                <p className="font-bold text-sm font-display" style={{ color: "var(--text)" }}>Atlas Proteico NP</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Biotecnología al alcance de todos · Gratis</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-5 text-sm" style={{ color: "var(--text-muted)" }}>
-              <span>
-                Conectado con{" "}
-                <a href="https://nutri-vida-khaki.vercel.app"
-                  className="transition-colors hover:opacity-80"
-                  style={{ color: "var(--teal)" }}>
-                  NutriVida NP
-                </a>
+        <footer className="mt-16" style={{ borderTop: "1px solid var(--text-faint)" }}>
+          {/* Status bar terminal */}
+          <div className="px-4 py-2 flex items-center justify-between gap-4 text-xs overflow-x-auto"
+            style={{
+              background: "var(--bg-card)",
+              borderBottom: "1px solid rgba(0,255,136,0.06)",
+              fontFamily: "var(--font-mono, monospace)",
+              color: "var(--text-muted)",
+            }}>
+            <div className="flex items-center gap-4 shrink-0">
+              <span style={{ color: "var(--teal)" }}>
+                <span style={{ marginRight: "0.3rem" }}>●</span>UniProt
               </span>
-              <span style={{ color: "var(--text-faint)" }}>·</span>
-              <span>RCSB PDB · UniProt · AlphaFold</span>
+              <span style={{ color: "var(--teal)" }}>
+                <span style={{ marginRight: "0.3rem" }}>●</span>RCSB PDB
+              </span>
+              <span style={{ color: "var(--teal)" }}>
+                <span style={{ marginRight: "0.3rem" }}>●</span>AlphaFold
+              </span>
             </div>
+            <span className="hidden sm:block" style={{ color: "var(--text-faint)" }}>
+              atlas_proteico_np v2.0 · open science
+            </span>
+          </div>
 
-            <p className="text-xs" style={{ color: "var(--text-faint)" }}>
-              © 2026 Atlas Proteico NP — Uso educativo libre
-            </p>
+          {/* Footer principal */}
+          <div className="py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-black"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--teal)",
+                    color: "var(--teal)",
+                    fontFamily: "var(--font-mono, monospace)",
+                  }}>
+                  AP
+                </div>
+                <div>
+                  <p className="font-bold text-sm font-display" style={{ color: "var(--text)" }}>Atlas Proteico NP</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>
+                    Biotecnología al alcance de todos · Gratis
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-sm" style={{ color: "var(--text-muted)" }}>
+                <span>
+                  Conectado con{" "}
+                  <a href="https://nutri-vida-khaki.vercel.app"
+                    className="transition-colors hover:opacity-80"
+                    style={{ color: "var(--teal)" }}>
+                    NutriVida NP
+                  </a>
+                </span>
+              </div>
+
+              <p className="text-xs" style={{ color: "var(--text-faint)", fontFamily: "var(--font-mono, monospace)" }}>
+                © 2026 Atlas Proteico NP — Uso educativo libre
+              </p>
+            </div>
           </div>
         </footer>
       </body>
