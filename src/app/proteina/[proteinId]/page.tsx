@@ -65,15 +65,6 @@ export default async function ProteinDetailPage({ params }: Props) {
           <div className="relative z-10">
             <div className="flex flex-col lg:flex-row lg:items-start gap-6">
               <div className="flex-1">
-                {/* Module badge */}
-                <Link
-                  href={`/modules/${parentModule.id}`}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold mb-5 hover:opacity-80 transition-opacity ${mc.badge} ${mc.badgeText}`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${mc.dot}`} />
-                  {parentModule.icon} {parentModule.name}
-                </Link>
-
                 <div className="flex items-start gap-4 mb-2">
                   <div>
                     <h1 className="text-4xl sm:text-5xl font-black">

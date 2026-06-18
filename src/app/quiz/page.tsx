@@ -167,10 +167,6 @@ export default function QuizPage() {
       <div className="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 molecular-grid opacity-40 pointer-events-none" />
         <div className="relative max-w-3xl mx-auto text-center">
-          <div className="label-teal mb-6 w-fit mx-auto">
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot" style={{ background: "var(--teal)" }} />
-            ACTIVIDAD INTERACTIVA · 20 PREGUNTAS
-          </div>
           <h1 className="font-display font-black leading-tight mb-4"
             style={{ fontSize: "clamp(2.2rem, 6vw, 4rem)", color: "var(--text)" }}>
             Quiz de{" "}

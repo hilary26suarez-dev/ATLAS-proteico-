@@ -161,22 +161,72 @@ export default function ProteinMPNNPanel({ pdbId, proteinName, hasLigands }: Pro
         </div>
       ))}
 
-      {/* Script sample */}
+      {/* Script explicado */}
       <div className="glass rounded-2xl border border-slate-700/50 p-5">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-          📋 Comando rápido (terminal)
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          📋 Cómo ejecutar ProteinMPNN localmente
         </p>
-        <pre className="text-xs font-mono text-emerald-400 bg-black/40 rounded-xl p-4 overflow-x-auto leading-relaxed border border-slate-800/50">
-{`python protein_mpnn_run.py \\
-  --pdb_path ${pdbId.toLowerCase()}.pdb \\
-  --out_folder ./output_${pdbId.toLowerCase()}/ \\
-  --num_seq_per_target 10 \\
-  --sampling_temp "0.1 0.2" \\
-  --model_name v_48_020`}
-        </pre>
-        <p className="text-xs text-slate-600 mt-2">
-          Basado en el script de <a href="https://github.com/dauparas/ProteinMPNN" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:opacity-80">dauparas/ProteinMPNN</a>
+        <p className="text-xs text-slate-500 mb-4">
+          Primero descarga el PDB de {proteinName} desde el botón ⬇ PDB arriba.
+          Luego clona el repo de ProteinMPNN y ejecuta:
         </p>
+
+        {/* Comando con anotaciones */}
+        <div className="rounded-xl overflow-hidden border border-slate-800/80 mb-4">
+          <div className="px-3 py-2 flex items-center gap-2" style={{ background: "rgba(0,0,0,0.5)" }}>
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+            <span className="text-xs text-slate-600 ml-2 font-mono">terminal</span>
+          </div>
+          <pre className="text-xs font-mono bg-black/40 p-4 overflow-x-auto leading-loose">
+            <span style={{ color: "#7c9e6b" }}># 1. Clona el repositorio</span>{"\n"}
+            <span style={{ color: "#4A9EFF" }}>git clone</span>
+            <span style={{ color: "#e2e8f0" }}> https://github.com/dauparas/ProteinMPNN{"\n"}</span>
+            <span style={{ color: "#e2e8f0" }}>cd ProteinMPNN{"\n\n"}</span>
+            <span style={{ color: "#7c9e6b" }}># 2. Ejecuta el diseño de secuencias</span>{"\n"}
+            <span style={{ color: "#4A9EFF" }}>python</span>
+            <span style={{ color: "#e2e8f0" }}> protein_mpnn_run.py \{"\n"}</span>
+            <span style={{ color: "#f5a623" }}>  --pdb_path</span>
+            <span style={{ color: "#00FF88" }}> {pdbId.toLowerCase()}.pdb</span>
+            <span style={{ color: "#64748b" }}>          # ← archivo PDB descargado{"\n"}</span>
+            <span style={{ color: "#f5a623" }}>  --out_folder</span>
+            <span style={{ color: "#00FF88" }}> ./output_{pdbId.toLowerCase()}/</span>
+            <span style={{ color: "#64748b" }}>    # ← carpeta de resultados{"\n"}</span>
+            <span style={{ color: "#f5a623" }}>  --num_seq_per_target</span>
+            <span style={{ color: "#00FF88" }}> 10</span>
+            <span style={{ color: "#64748b" }}>           # ← cuántas secuencias generar{"\n"}</span>
+            <span style={{ color: "#f5a623" }}>  --sampling_temp</span>
+            <span style={{ color: "#00FF88" }}> &quot;0.1 0.2&quot;</span>
+            <span style={{ color: "#64748b" }}>      # ← 0.1=conservador, 0.5=diverso{"\n"}</span>
+            <span style={{ color: "#f5a623" }}>  --model_name</span>
+            <span style={{ color: "#00FF88" }}> v_48_020</span>
+            <span style={{ color: "#64748b" }}>           # ← modelo recomendado{"\n"}</span>
+          </pre>
+        </div>
+
+        {/* Qué obtienes */}
+        <div className="p-4 rounded-xl" style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>¿QUÉ OBTIENES EN LA CARPETA output/?</p>
+          <ul className="space-y-1.5">
+            {[
+              { f: "seqs/", desc: "Secuencias diseñadas en formato FASTA, una por temperatura" },
+              { f: "scores/", desc: "Puntuación de cada secuencia (menor = mejor ajuste al backbone)" },
+              { f: "probs/", desc: "Probabilidades residuo a residuo para análisis de posiciones clave" },
+            ].map((item) => (
+              <li key={item.f} className="flex items-start gap-2 text-xs">
+                <span className="font-mono font-bold flex-shrink-0" style={{ color: "var(--teal)" }}>{item.f}</span>
+                <span style={{ color: "var(--text-muted)" }}>{item.desc}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs mt-3 pt-3 border-t" style={{ color: "var(--text-faint)", borderColor: "rgba(255,255,255,0.05)" }}>
+            Siguiente paso: pega las secuencias del archivo FASTA en{" "}
+            <a href="https://colab.research.google.com/github/sokrypton/ColabFold/blob/main/AlphaFold2.ipynb" target="_blank" rel="noopener noreferrer"
+              className="hover:opacity-80" style={{ color: "#a78bfa" }}>ColabFold</a>
+            {" "}para verificar que el modelo predice el mismo fold que la estructura original de {proteinName}.
+          </p>
+        </div>
       </div>
     </div>
   );

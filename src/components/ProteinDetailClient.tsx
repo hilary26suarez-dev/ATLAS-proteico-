@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import BiblioprotePanel from "./BiblioprotePanel";
 import HPAPanel from "./HPAPanel";
+import LigandsPanel from "./LigandsPanel";
+import MechanismSteps from "./MechanismSteps";
 import MiniQuiz from "./MiniQuiz";
 import ModeToggle from "./ModeToggle";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
@@ -119,11 +121,12 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
       {/* ── Info panels abajo ──────────────────────────────────────── */}
       {mode === "student" && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* 3 tarjetas principales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="glass rounded-2xl border border-cyan-500/20 p-6">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xl">🎓</span>
-                <h3 className="text-base font-bold text-cyan-400">¿Qué hace esta proteína?</h3>
+                <h3 className="text-base font-bold text-cyan-400">¿Qué hace?</h3>
               </div>
               <p className="text-slate-300 leading-relaxed text-sm">{protein.studentSummary}</p>
             </div>
@@ -145,6 +148,11 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             </div>
           </div>
 
+          {/* Mecanismo paso a paso */}
+          <div className="mb-6">
+            <MechanismSteps mechanism={protein.mechanism} color="var(--teal)" />
+          </div>
+
           {/* Mini-quiz activo recall */}
           <div className="mb-8">
             <MiniQuiz
@@ -158,6 +166,45 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
 
       {mode === "researcher" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+
+          {/* Botones de descarga */}
+          <div className="md:col-span-2 flex flex-wrap gap-3 p-4 rounded-2xl"
+            style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <span className="text-xs self-center" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>
+              DESCARGAR DATOS →
+            </span>
+            <a
+              href={`https://files.rcsb.org/download/${protein.pdbId}.pdb`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+              style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: "var(--teal)" }}
+            >
+              ⬇ PDB ({protein.pdbId})
+            </a>
+            <a
+              href={`https://alphafold.ebi.ac.uk/files/AF-${protein.uniprotId}-F1-model_v4.pdb`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+              style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", color: "#a78bfa" }}
+            >
+              ⬇ AlphaFold PDB
+            </a>
+            <button
+              onClick={() => {
+                const data = JSON.stringify(protein, null, 2);
+                const blob = new Blob([data], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `${protein.id}_atlas.json`;
+                a.click(); URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+              style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)", color: "var(--amber)" }}
+            >
+              ⬇ JSON (Atlas)
+            </button>
+          </div>
+
           <div className="glass rounded-2xl border border-violet-500/20 p-6">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xl">🔬</span>
@@ -167,23 +214,19 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
           </div>
 
           <div className="glass rounded-2xl border border-slate-700 p-6">
-            <h3 className="text-base font-bold text-slate-300 mb-3">⚙️ Mecanismo</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">{protein.mechanism}</p>
+            <h3 className="text-base font-bold text-slate-300 mb-4">⚙️ Mecanismo molecular</h3>
+            <MechanismSteps mechanism={protein.mechanism} color="#a78bfa" />
           </div>
 
-          <div className="glass rounded-2xl border border-slate-700 p-5">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Ligandos & Sustratos</h3>
-            <div className="flex flex-wrap gap-2">
-              {protein.ligands.map((l) => (
-                <span key={l} className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium">
-                  {l}
-                </span>
-              ))}
-            </div>
+          {/* Ligandos enriquecidos */}
+          <div className="md:col-span-2 glass rounded-2xl border border-violet-500/15 p-6">
+            <h3 className="text-sm font-bold text-violet-400 mb-4">⚗️ Ligandos, Sustratos y Cofactores</h3>
+            <LigandsPanel ligands={protein.ligands} />
           </div>
 
+          {/* Recursos externos */}
           <div className="glass rounded-2xl border border-slate-700 p-5">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Recursos externos</h3>
+            <h3 className="text-sm font-bold text-slate-400 mb-3">Recursos externos</h3>
             <div className="flex flex-col gap-2">
               {[
                 { label: "RCSB PDB", url: protein.pdbUrl, icon: "🏛️", color: "text-cyan-400" },
@@ -192,13 +235,8 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
                 { label: `PubMed: ${protein.pubmedId}`, url: `https://pubmed.ncbi.nlm.nih.gov/${protein.pubmedId}`, icon: "📄", color: "text-amber-400" },
                 { label: `Human Protein Atlas: ${protein.gene}`, url: `https://www.proteinatlas.org/search/${protein.gene}`, icon: "🗺️", color: "text-rose-400" },
               ].map((r) => (
-                <a
-                  key={r.url}
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all group"
-                >
+                <a key={r.url} href={r.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all group">
                   <span>{r.icon}</span>
                   <span className={`text-sm font-medium ${r.color} group-hover:opacity-80`}>{r.label}</span>
                   <svg className="w-3.5 h-3.5 ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,6 +244,31 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
                   </svg>
                 </a>
               ))}
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl border border-slate-700 p-5">
+            <h3 className="text-sm font-bold text-slate-400 mb-3">Localización y propiedades</h3>
+            <div className="space-y-3">
+              <div className="p-3 rounded-xl" style={{ background: "var(--bg-raised)" }}>
+                <p className="text-xs mb-1" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>LOCALIZACIÓN</p>
+                <p className="text-sm" style={{ color: "var(--text)" }}>{protein.location}</p>
+              </div>
+              <div className="p-3 rounded-xl" style={{ background: "var(--bg-raised)" }}>
+                <p className="text-xs mb-1" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>PESO MOLECULAR</p>
+                <p className="text-sm font-mono font-bold" style={{ color: "var(--teal)" }}>{protein.weight}</p>
+              </div>
+              <div className="p-3 rounded-xl" style={{ background: "var(--bg-raised)" }}>
+                <p className="text-xs mb-2" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>TAGS FUNCIONALES</p>
+                <div className="flex flex-wrap gap-1">
+                  {protein.tags.map((tag) => (
+                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import OsmolarityCalcWrapper from "./OsmolarityCalcWrapper";
+import NPBagVisualWrapper from "./NPBagVisualWrapper";
 
 export const metadata: Metadata = {
   title: "Osmolaridad en NP | Atlas Proteico NP",
@@ -109,11 +110,6 @@ export default function OsmolaridadPage() {
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center">
-          <div className="label-teal mb-6 w-fit mx-auto">
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot" style={{ background: "var(--teal)" }} />
-            MÓDULO EDUCATIVO · FARMACOLOGÍA CLÍNICA NP
-          </div>
-
           <h1 className="font-display font-black leading-tight mb-6"
             style={{ fontSize: "clamp(2.5rem,7vw,4.5rem)", color: "var(--text)" }}>
             Osmolaridad en{" "}
@@ -220,19 +216,22 @@ export default function OsmolaridadPage() {
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-10">
-            <p className="text-xs tracking-[0.2em] mb-3"
-              style={{ color: "var(--teal)", fontFamily: "var(--font-mono, monospace)" }}>
-              ANATOMÍA MOLECULAR
-            </p>
             <h2 className="font-display font-black text-4xl" style={{ color: "var(--text)" }}>
               ¿Qué hay dentro de<br />
               <span style={{ color: "#f5a623" }}>una bolsa de NP?</span>
             </h2>
             <p className="mt-3 text-base" style={{ color: "var(--text-muted)" }}>
-              Cada componente tiene un rol molecular preciso y una contribución osmolar calculable.
+              Toca cada capa de la bolsa para entender el rol molecular y osmolar de cada componente.
             </p>
           </div>
 
+          {/* Visual interactivo de bolsa */}
+          <div className="rounded-2xl p-6 mb-10"
+            style={{ background: "var(--bg-card)", border: "1px solid rgba(245,166,35,0.12)" }}>
+            <NPBagVisualWrapper />
+          </div>
+
+          {/* Detalle expandido por componente */}
           <div className="space-y-4">
             {COMPONENTS_INFO.map((c) => (
               <div key={c.name} className="rounded-2xl overflow-hidden"

@@ -61,13 +61,6 @@ export default function Home() {
             {/* ── Columna izquierda: contenido ── */}
             <div className="flex flex-col justify-center order-2 lg:order-1">
 
-              {/* Badge */}
-              <div className="label-teal mb-8 w-fit">
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse-dot"
-                  style={{ background: "var(--teal)" }} />
-                {totalProteins} PROTEÍNAS · RCSB PDB · OPEN SCIENCE · GRATIS
-              </div>
-
               {/* Headline */}
               <h1 className="font-display font-black leading-[0.88] tracking-tighter mb-8"
                 style={{ fontSize: "clamp(3rem, 7.5vw, 6rem)" }}>
@@ -124,24 +117,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════
-          MARQUEE — Ticker de proteínas
-      ════════════════════════════════════════ */}
-      <div className="relative overflow-hidden py-3 border-y"
-        style={{ borderColor: "rgba(0,255,136,0.07)", background: "var(--bg-card)" }}>
-        <div className="marquee-track select-none">
-          {[...allProteinNames, ...allProteinNames].map((p, i) => (
-            <span key={i} className="inline-flex items-center gap-3 mx-6">
-              <span className="text-xs font-semibold tracking-wider"
-                style={{ color: "var(--teal)", fontFamily: "var(--font-mono, monospace)" }}>
-                {p.abbr}
-              </span>
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>{p.name}</span>
-              <span style={{ color: "var(--text-faint)" }}>·</span>
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* ════════════════════════════════════════
           STATS
