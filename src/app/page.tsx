@@ -325,6 +325,7 @@ export default function Home() {
               { icon: "⚗️", title: "3D desde RCSB PDB",    desc: "Estructuras cristalográficas reales. Rota, acerca y explora en tu navegador.", color: "var(--teal)",     href: null },
               { icon: "🎓", title: "Modo Estudiante",       desc: "Lenguaje claro, cartoon visual y escenarios clínicos de NP.", color: "var(--amber)",   href: null },
               { icon: "🔬", title: "Modo Investigador",     desc: "Superficies, ligandos, AlphaFold DB, HPA en vivo, ProteinMPNN.", color: "var(--purple)",  href: null },
+              { icon: "🧂", title: "Osmolaridad NP",        desc: "Calculadora interactiva: descubre por qué la osmolaridad define el acceso vascular de tu paciente.", color: "var(--amber)", href: "/osmolaridad" },
               { icon: "🧲", title: "Docking Molecular",     desc: "Visualiza cómo las moléculas se acoplan a proteínas. AutoDock Vina y simulación interactiva.", color: "var(--electric)", href: "/docking" },
               { icon: "🧠", title: "Quiz de Proteínas",     desc: "Pon a prueba tu conocimiento con preguntas clínicas sobre las proteínas del atlas.", color: "var(--teal)", href: "/quiz" },
               { icon: "🌐", title: "Open Science",          desc: "UniProt, RCSB, AlphaFold, PubMed. Ciencia abierta, sin barreras.", color: "var(--amber)",   href: null },

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/",        label: "Inicio" },
-  { href: "/modules", label: "Módulos" },
-  { href: "/docking", label: "Docking" },
-  { href: "/quiz",    label: "Quiz" },
-  { href: "/buscar",  label: "Buscar" },
+  { href: "/",             label: "Inicio" },
+  { href: "/modules",      label: "Módulos" },
+  { href: "/osmolaridad",  label: "Osmolaridad" },
+  { href: "/docking",      label: "Docking" },
+  { href: "/quiz",         label: "Quiz" },
+  { href: "/buscar",       label: "Buscar" },
 ];
 
 export default function Navbar() {
