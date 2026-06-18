@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const DockingViewer3D = dynamic(() => import("./DockingViewer3D"), {
@@ -113,6 +113,13 @@ const COMPLEXES = [
 
 export default function DockingPageClient() {
   const [selected, setSelected] = useState(COMPLEXES[0]);
+
+  // Precarga en background para poblar la caché del navegador
+  useEffect(() => {
+    COMPLEXES.forEach((c) => {
+      fetch(`https://files.rcsb.org/download/${c.pdbId}.pdb`, { cache: "force-cache" }).catch(() => {});
+    });
+  }, []);
 
   const maxKcal = Math.max(...COMPLEXES.map((c) => Math.abs(c.kcalMol)));
 

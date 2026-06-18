@@ -26,6 +26,8 @@ export default function DockingViewer3D({
   const ligandReprRef = useRef<any>(null);
 
   const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(false);
+  const [retryKey,   setRetryKey]   = useState(0);
   const [ready,      setReady]      = useState(false);
   const [repLoading, setRepLoading] = useState(false);
   const [rep,        setRep]        = useState<RepMode>("cartoon");
@@ -84,23 +86,34 @@ export default function DockingViewer3D({
 
     // Escuchar cuándo terminan los workers de superficie
     if (needsSurface && stage) {
-      const check = () => { if ((stage.tasks?.count ?? 0) === 0) setRepLoading(false); };
+      let active = true;
+      const check = () => {
+        if (!active) return;
+        if ((stage.tasks?.count ?? 0) === 0) { active = false; setRepLoading(false); }
+      };
       const unsub = stage.signals?.taskCountChanged?.add(check);
       check(); // por si ya terminó al momento de suscribir
-      return () => { try { unsub?.(); } catch { /* */ } };
+      // Fallback: polling cada 400 ms por si el signal no dispara
+      const poll = setInterval(check, 400);
+      return () => { active = false; clearInterval(poll); try { unsub?.(); } catch { /* */ } };
     }
   }, [rep, ready, showLigands]);
 
   // ── Montar stage — NO añade representaciones ───────────────────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setLoading(true); setReady(false); setRepLoading(false);
+    setLoading(true); setError(false); setReady(false); setRepLoading(false);
     compRef.current = null; ligandReprRef.current = null;
     let disposed = false;
 
     function mount() {
       if (disposed || !containerRef.current) return;
       if (stageRef.current) { try { stageRef.current.dispose(); } catch { /* */ } }
+
+      // Limpiar canvas residual antes de crear el nuevo Stage
+      while (containerRef.current.firstChild) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
+      }
 
       let stage: any;
       try {
@@ -115,22 +128,32 @@ export default function DockingViewer3D({
       const ro = new ResizeObserver(() => stage.handleResize());
       if (containerRef.current) ro.observe(containerRef.current);
 
-      stage.loadFile(`https://files.rcsb.org/download/${pdbId.toUpperCase()}.pdb`, {
-        defaultRepresentation: false, // NO representación por defecto
-      })
-      .then((comp: any) => {
+      const id = pdbId.toUpperCase();
+      const onLoad = (comp: any) => {
         if (disposed) return;
         compRef.current = comp;
-        comp.autoView(); // centrar cámara sobre la estructura vacía
+        comp.autoView();
         setLoading(false);
-        setReady(true);  // ← dispara el useEffect de representaciones
+        setReady(true);
         requestAnimationFrame(() => {
           if (disposed) return;
           stage.handleResize(); comp.autoView();
           stage.setSpin([0, 1, 0], 0.005);
         });
+      };
+
+      // Intentar .pdb primero; fallback a .cif si falla
+      stage.loadFile(`https://files.rcsb.org/download/${id}.pdb`, {
+        defaultRepresentation: false,
       })
-      .catch(() => { if (!disposed) setLoading(false); });
+      .then(onLoad)
+      .catch(() => {
+        if (disposed) return Promise.resolve();
+        return stage.loadFile(`https://files.rcsb.org/download/${id}.cif`, {
+          defaultRepresentation: false,
+        }).then(onLoad);
+      })
+      .catch(() => { if (!disposed) { setLoading(false); setError(true); } });
 
       return () => { window.removeEventListener("resize", onResize); ro.disconnect(); };
     }
@@ -150,7 +173,7 @@ export default function DockingViewer3D({
       try { stageRef.current?.dispose(); } catch { /* */ }
       stageRef.current = null;
     };
-  }, [pdbId, showLigands]);
+  }, [pdbId, showLigands, retryKey]);
 
   // ── Spin ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -228,8 +251,26 @@ export default function DockingViewer3D({
 
       {/* Canvas */}
       <div className="relative flex-1">
+        {/* Error overlay */}
+        {error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-20"
+            style={{ background: "#07080F" }}>
+            <span style={{ fontSize: "1.5rem" }}>⚠️</span>
+            <span style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "#ef4444", letterSpacing: "0.12em" }}>
+              ERROR AL CARGAR {pdbId.toUpperCase()}
+            </span>
+            <span style={{ fontFamily: "monospace", fontSize: "0.55rem", color: "#6B7BA0" }}>
+              No se pudo obtener la estructura desde RCSB PDB
+            </span>
+            <button onClick={() => { setError(false); setLoading(true); setRetryKey(k => k + 1); }}
+              style={{ fontFamily: "monospace", fontSize: "0.6rem", color: "var(--teal)", border: "1px solid rgba(0,255,136,0.3)", background: "rgba(0,255,136,0.06)", padding: "6px 14px", borderRadius: 8, cursor: "pointer" }}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {/* Loading / Computing overlay */}
-        {(loading || repLoading) && (
+        {!error && (loading || repLoading) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-20"
             style={{ background: loading ? "#07080F" : "rgba(7,8,15,0.72)", backdropFilter: repLoading ? "blur(3px)" : "none" }}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", border: "2px solid rgba(0,255,136,0.1)", borderTopColor: "var(--teal)", animation: "hero-spin 0.9s linear infinite" }} />
@@ -280,7 +321,7 @@ export default function DockingViewer3D({
           </div>
         )}
 
-        <div ref={containerRef} className="w-full h-full" />
+        <div ref={containerRef} className="relative w-full h-full" />
       </div>
     </div>
   );
