@@ -23,7 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Atlas Proteico NP | Biotecnología para la Salud",
-  description: "Explora el universo molecular de las proteínas esenciales en Nutrición Parenteral. Visualización 3D interactiva, modos Estudiante e Investigador. Gratis para profesionales de la salud.",
+  description: "Explora el universo molecular de las proteínas esenciales en Nutrición Parenteral. Visualización 3D interactiva, modos Estudiante e Investigador para profesionales de la salud.",
   keywords: ["proteínas", "nutrición parenteral", "bioinformática", "atlas proteico", "3D", "salud", "biotecnología", "Costa Rica"],
   authors: [{ name: "Atlas Proteico NP" }],
   openGraph: {
@@ -88,7 +88,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <div>
                   <p className="font-bold text-sm font-display" style={{ color: "var(--text)" }}>Atlas Proteico NP</p>
                   <p className="text-xs" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>
-                    Biotecnología al alcance de todos · Gratis
+                    Biotecnología al alcance de todos
                   </p>
                 </div>
               </div>

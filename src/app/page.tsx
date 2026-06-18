@@ -342,10 +342,6 @@ export default function Home() {
       ════════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="text-xs tracking-[0.25em] mb-4"
-            style={{ color: "var(--teal)", fontFamily: "var(--font-mono, monospace)" }}>
-            EMPIEZA AHORA · ES GRATIS
-          </p>
           <h2 className="font-display font-black mb-6"
             style={{ fontSize: "clamp(2.5rem,6vw,4.5rem)", color: "var(--text)", lineHeight: 1 }}>
             La ciencia molecular<br />
