@@ -37,7 +37,7 @@ export default function CuriosidadesCard({ proteinId, color = "var(--teal)" }: P
                   {f.fact}
                 </p>
                 {expanded === i && (
-                  <p className="text-xs mt-2 font-mono" style={{ color: "var(--text-faint)" }}>
+                  <p className="text-xs mt-2 font-mono" style={{ color: "#6B7BA0" }}>
                     Fuente: {f.source}
                   </p>
                 )}

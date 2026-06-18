@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import VitaminMoleculeViewerWrapper from "./VitaminMoleculeViewerWrapper";
 
 export const metadata: Metadata = {
   title: "Vitaminas en NP | Atlas Proteico NP",
@@ -264,7 +265,7 @@ export default function VitaminasPage() {
             <span style={{ color: "var(--text)" }}>Vitaminas</span><br />
             <span style={{ color: "#f5a623" }}>en Nutrición Parenteral</span>
           </h1>
-          <p className="text-lg max-w-2xl" style={{ color: "var(--text-muted)" }}>
+          <p className="text-lg max-w-2xl" style={{ color: "#B0BAD4" }}>
             Las vitaminas no son solo "suplementos" — son <strong style={{ color: "var(--text)" }}>cofactores moleculares</strong> sin los cuales las enzimas del Atlas no pueden funcionar. En NP, el acceso intestinal está ausente: cada vitamina debe llegar directamente a la vena, en la dosis exacta, en la forma correcta.
           </p>
 
@@ -299,7 +300,7 @@ export default function VitaminasPage() {
               style={{ background: "var(--bg-card)", border: `1px solid ${c.color}15` }}>
               <span className="text-2xl mb-3 block">{c.icon}</span>
               <h3 className="font-bold text-sm mb-2" style={{ color: c.color }}>{c.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{c.desc}</p>
+              <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{c.desc}</p>
             </div>
           ))}
         </div>
@@ -318,13 +319,13 @@ export default function VitaminasPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="font-bold text-base" style={{ color: "var(--text)" }}>{v.name}</span>
-                      <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{v.alias}</span>
+                      <span className="text-xs font-mono" style={{ color: "#B0BAD4" }}>{v.alias}</span>
                       <span className="text-xs font-mono px-2 py-0.5 rounded-full"
                         style={{ background: risk.bg, border: `1px solid ${risk.border}`, color: v.riskLevel === "critical" ? "#ef4444" : v.riskLevel === "moderate" ? "#fbbf24" : "#22d3ee" }}>
                         {risk.label}
                       </span>
                     </div>
-                    <p className="text-xs mt-1 line-clamp-1" style={{ color: "var(--text-muted)" }}>{v.npRisk}</p>
+                    <p className="text-xs mt-1 line-clamp-1" style={{ color: "#B0BAD4" }}>{v.npRisk}</p>
                   </div>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-open:rotate-180"
                     style={{ background: `${v.color}12`, color: v.color }}>
@@ -340,19 +341,19 @@ export default function VitaminasPage() {
                       {/* Fórmula y coenzima */}
                       <div className="rounded-xl p-4" style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.04)" }}>
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs font-mono tracking-widest" style={{ color: "var(--text-faint)" }}>ESTRUCTURA</span>
+                          <span className="text-xs font-mono tracking-widest" style={{ color: "#6B7BA0" }}>ESTRUCTURA</span>
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span style={{ color: "var(--text-muted)" }}>Fórmula:</span>
+                            <span style={{ color: "#B0BAD4" }}>Fórmula:</span>
                             <span className="font-mono font-bold" style={{ color: v.color }}>{v.chemForm}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span style={{ color: "var(--text-muted)" }}>Coenzima activa:</span>
+                            <span style={{ color: "#B0BAD4" }}>Coenzima activa:</span>
                             <span className="text-right text-xs" style={{ color: "var(--text)" }}>{v.coenzyme}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span style={{ color: "var(--text-muted)" }}>Rol:</span>
+                            <span style={{ color: "#B0BAD4" }}>Rol:</span>
                             <span className="text-xs px-2 py-0.5 rounded-full"
                               style={{ background: `${v.color}12`, color: v.color }}>{v.role}</span>
                           </div>
@@ -361,8 +362,8 @@ export default function VitaminasPage() {
 
                       {/* Mecanismo */}
                       <div className="rounded-xl p-4" style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <p className="text-xs font-mono tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>MECANISMO MOLECULAR</p>
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{v.mechanism}</p>
+                        <p className="text-xs font-mono tracking-widest mb-2" style={{ color: "#6B7BA0" }}>MECANISMO MOLECULAR</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{v.mechanism}</p>
                       </div>
                     </div>
 
@@ -370,12 +371,12 @@ export default function VitaminasPage() {
                     <div className="space-y-4">
                       {/* Enzimas dependientes */}
                       <div className="rounded-xl p-4" style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <p className="text-xs font-mono tracking-widest mb-3" style={{ color: "var(--text-faint)" }}>ENZIMAS DEPENDIENTES</p>
+                        <p className="text-xs font-mono tracking-widest mb-3" style={{ color: "#6B7BA0" }}>ENZIMAS DEPENDIENTES</p>
                         <div className="space-y-1.5">
                           {v.enzymes.map((e) => (
                             <div key={e} className="flex items-center gap-2 text-sm">
                               <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: v.color }} />
-                              <span style={{ color: "var(--text-muted)" }}>{e}</span>
+                              <span style={{ color: "#B0BAD4" }}>{e}</span>
                             </div>
                           ))}
                         </div>
@@ -387,7 +388,7 @@ export default function VitaminasPage() {
                           style={{ color: v.riskLevel === "critical" ? "#ef4444" : v.riskLevel === "moderate" ? "#fbbf24" : "#22d3ee" }}>
                           EN NUTRICIÓN PARENTERAL
                         </p>
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{v.clinicalNote}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{v.clinicalNote}</p>
                       </div>
 
                       {/* Link al atlas */}
@@ -397,7 +398,7 @@ export default function VitaminasPage() {
                           style={{ background: `${v.color}08`, border: `1px solid ${v.color}25` }}>
                           <span className="text-lg">🧬</span>
                           <div>
-                            <p className="text-xs font-mono mb-0.5" style={{ color: "var(--text-faint)" }}>Ver proteína relacionada</p>
+                            <p className="text-xs font-mono mb-0.5" style={{ color: "#6B7BA0" }}>Ver proteína relacionada</p>
                             <p className="text-sm font-bold" style={{ color: v.color }}>{v.atlasLinkLabel} ↗</p>
                           </div>
                         </Link>
@@ -405,12 +406,20 @@ export default function VitaminasPage() {
                     </div>
                   </div>
 
+                  {/* 3D molecular viewer */}
+                  <div className="mt-5">
+                    <p className="text-xs font-mono mb-2" style={{ color: "#6B7BA0" }}>
+                      VISUALIZACIÓN 3D · Coenzima activa (ball+stick)
+                    </p>
+                    <VitaminMoleculeViewerWrapper vitaminId={v.id} color={v.color} />
+                  </div>
+
                   {/* PDB viewer link */}
-                  <div className="mt-4 flex items-center gap-3 text-xs" style={{ color: "var(--text-faint)" }}>
-                    <span className="font-mono">PDB: {v.pdbId}</span>
+                  <div className="mt-4 flex items-center gap-3 text-xs" style={{ color: "#6B7BA0" }}>
+                    <span className="font-mono">PDB proteína: {v.pdbId}</span>
                     <a href={`https://www.rcsb.org/structure/${v.pdbId}`} target="_blank" rel="noopener noreferrer"
                       className="hover:opacity-80 transition-opacity" style={{ color: v.color }}>
-                      Ver estructura en RCSB PDB ↗
+                      Ver complejo en RCSB ↗
                     </a>
                   </div>
                 </div>
@@ -428,7 +437,7 @@ export default function VitaminasPage() {
             ¿Qué pasa cuando las vitaminas interactúan<br />
             <span style={{ color: "#f5a623" }}>con los otros componentes de la bolsa?</span>
           </h2>
-          <p className="text-base mb-6 max-w-xl mx-auto" style={{ color: "var(--text-muted)" }}>
+          <p className="text-base mb-6 max-w-xl mx-auto" style={{ color: "#B0BAD4" }}>
             Explora precipitación de calcio-fosfato, ruptura de emulsión lipídica y compatibilidad de fármacos en nuestro simulador interactivo de estabilidad.
           </p>
           <Link href="/simulador"
