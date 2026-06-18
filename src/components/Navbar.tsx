@@ -7,8 +7,9 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/",             label: "Inicio" },
   { href: "/modules",      label: "Módulos" },
+  { href: "/vitaminas",    label: "Vitaminas" },
   { href: "/osmolaridad",  label: "Osmolaridad" },
-  { href: "/docking",      label: "Docking" },
+  { href: "/simulador",    label: "Simulador" },
   { href: "/quiz",         label: "Quiz" },
   { href: "/buscar",       label: "Buscar" },
 ];

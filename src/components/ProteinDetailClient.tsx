@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import BiblioprotePanel from "./BiblioprotePanel";
+import CuriosidadesCard from "./CuriosidadesCard";
 import HPAPanel from "./HPAPanel";
 import LigandsPanel from "./LigandsPanel";
 import MechanismSteps from "./MechanismSteps";
@@ -153,6 +154,9 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             <MechanismSteps mechanism={protein.mechanism} color="var(--teal)" />
           </div>
 
+          {/* Curiosidades bioquímicas */}
+          <CuriosidadesCard proteinId={protein.id} color="var(--teal)" />
+
           {/* Mini-quiz activo recall */}
           <div className="mb-8">
             <MiniQuiz
@@ -182,12 +186,12 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
               ⬇ PDB ({protein.pdbId})
             </a>
             <a
-              href={`https://alphafold.ebi.ac.uk/files/AF-${protein.uniprotId}-F1-model_v4.pdb`}
+              href={protein.alphafoldUrl}
               target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
               style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", color: "#a78bfa" }}
             >
-              ⬇ AlphaFold PDB
+              AlphaFold DB ↗
             </a>
             <button
               onClick={() => {
