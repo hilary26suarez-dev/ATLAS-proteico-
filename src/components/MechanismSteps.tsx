@@ -44,7 +44,7 @@ export default function MechanismSteps({ mechanism, color }: Props) {
               </div>
               {i < steps.length - 1 && (
                 <svg className="w-3 h-3 flex-shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  style={{ color: "var(--text-faint)" }}>
+                  style={{ color: "#6B7BA0" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               )}

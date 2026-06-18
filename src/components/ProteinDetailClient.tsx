@@ -9,6 +9,7 @@ import LigandsPanel from "./LigandsPanel";
 import MechanismSteps from "./MechanismSteps";
 import MiniQuiz from "./MiniQuiz";
 import ModeToggle from "./ModeToggle";
+import ProfessionLens from "./ProfessionLens";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -56,6 +57,7 @@ interface Props {
 
 export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId }: Props) {
   const [mode, setMode] = useState<"student" | "researcher">("student");
+  const [profession, setProfession] = useState<"all" | "nursing" | "pharmacy" | "medicine" | "nutrition">("all");
   const { markVisited } = useProgress();
 
   useEffect(() => {
@@ -122,6 +124,9 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
       {/* ── Info panels abajo ──────────────────────────────────────── */}
       {mode === "student" && (
         <>
+          {/* Filtro de profesión */}
+          <ProfessionLens protein={protein} profession={profession} onChange={setProfession} />
+
           {/* 3 tarjetas principales */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="glass rounded-2xl border border-cyan-500/20 p-6">

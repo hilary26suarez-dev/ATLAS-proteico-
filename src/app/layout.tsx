@@ -47,7 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Navbar />
         <main className="flex-1">{children}</main>
 
-        <footer className="mt-16" style={{ borderTop: "1px solid var(--text-faint)" }}>
+        <footer className="mt-16" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           {/* Status bar terminal */}
           <div className="px-4 py-2 flex items-center justify-between gap-4 text-xs overflow-x-auto"
             style={{
@@ -67,7 +67,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <span style={{ marginRight: "0.3rem" }}>●</span>AlphaFold
               </span>
             </div>
-            <span className="hidden sm:block" style={{ color: "var(--text-faint)" }}>
+            <span className="hidden sm:block" style={{ color: "#6B7BA0" }}>
               atlas_proteico_np v2.0 · open science
             </span>
           </div>

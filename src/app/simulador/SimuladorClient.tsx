@@ -57,10 +57,10 @@ export default function SimuladorClient() {
                 {t.label}
               </span>
             </div>
-            <div className="text-xs font-mono" style={{ color: activeTab === t.id ? t.color : "var(--text-faint)" }}>
+            <div className="text-xs font-mono" style={{ color: activeTab === t.id ? t.color : "#6B7BA0" }}>
               {t.sublabel}
             </div>
-            <div className="text-xs mt-1" style={{ color: "var(--text-faint)" }}>
+            <div className="text-xs mt-1" style={{ color: "#6B7BA0" }}>
               {t.audience}
             </div>
           </button>

@@ -10,6 +10,8 @@ const links = [
   { href: "/vitaminas",    label: "Vitaminas" },
   { href: "/osmolaridad",  label: "Osmolaridad" },
   { href: "/simulador",    label: "Simulador" },
+  { href: "/docking",      label: "Docking" },
+  { href: "/casos",        label: "Casos" },
   { href: "/quiz",         label: "Quiz" },
   { href: "/buscar",       label: "Buscar" },
 ];
