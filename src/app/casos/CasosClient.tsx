@@ -1,26 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
+type StepId = "story" | "molecular" | "management" | "quiz";
+
+interface PathwayNode { label: string; sub?: string; blocked?: boolean; highlight?: boolean; }
+interface LabValue    { name: string; value: string; unit: string; normal: string; pct: number; alert: boolean; }
+
 interface ClinicalCase {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  color: string;
-  specialty: string[];
-  difficulty: "Básico" | "Intermedio" | "Avanzado";
-  patient: {
-    age: string;
-    sex: string;
-    diagnosis: string;
-    vitals: string;
-    labs: { name: string; value: string; alert?: boolean }[];
-  };
-  story: string;
-  question: string;
-  keyProteins: { name: string; id: string; moduleId: string; role: string; color: string }[];
+  id: string; title: string; subtitle: string; icon: string; color: string;
+  specialty: string[]; difficulty: "Básico" | "Intermedio" | "Avanzado";
+  patient: { age: string; sex: string; diagnosis: string; vitals: string };
+  labs: LabValue[];
+  story: string; question: string;
+  pathway: { title: string; nodes: PathwayNode[] };
+  keyProteins: { name: string; id: string; role: string; color: string }[];
   molecular: string;
   npImplication: string;
   management: string[];
@@ -30,421 +25,497 @@ interface ClinicalCase {
 
 const CASES: ClinicalCase[] = [
   {
-    id: "hepatic-failure",
+    id: "hepatic",
     title: "Falla hepática y hiperamonemia",
-    subtitle: "Paciente con cirrosis en NP total",
-    icon: "🫀",
-    color: "#f87171",
-    specialty: ["Medicina", "Nutrición"],
-    difficulty: "Avanzado",
-    patient: {
-      age: "58 años", sex: "Masculino",
-      diagnosis: "Cirrosis hepática Child-Pugh C + encefalopatía grado II",
-      vitals: "FC 102 · PA 88/60 mmHg · Glasgow 11",
-      labs: [
-        { name: "NH₃ (amoniaco)", value: "148 μmol/L", alert: true },
-        { name: "Albúmina", value: "1.8 g/dL", alert: true },
-        { name: "PT/INR", value: "18 s / 1.9", alert: true },
-        { name: "BUN", value: "8 mg/dL" },
-        { name: "Glutamina plasmática", value: "↑ 940 μmol/L" },
+    subtitle: "Cirrosis Child-Pugh C en NP total",
+    icon: "🫀", color: "#f87171",
+    specialty: ["Medicina", "Nutrición"], difficulty: "Avanzado",
+    patient: { age: "58 años", sex: "M", diagnosis: "Cirrosis hepática etílica Child-Pugh C + encefalopatía grado II", vitals: "FC 102 · PA 88/60 · Glasgow 11" },
+    labs: [
+      { name: "Amoniaco (NH₃)", value: "148", unit: "μmol/L", normal: "< 50", pct: 92, alert: true },
+      { name: "Albúmina",       value: "1.8",  unit: "g/dL",   normal: "3.5–5.0", pct: 36, alert: true },
+      { name: "PT/INR",         value: "1.9",  unit: "",        normal: "< 1.2", pct: 75, alert: true },
+      { name: "Glutamina",      value: "940",  unit: "μmol/L", normal: "< 700", pct: 80, alert: true },
+      { name: "BUN",            value: "8",    unit: "mg/dL",  normal: "7–20",  pct: 15, alert: false },
+    ],
+    story: "Ingresa a UCI paciente de 58 años con cirrosis Child-Pugh C. 72 h sin ingesta oral. Se inicia NP estándar con 1.5 g/kg/día de aminoácidos. A las 6 horas el NH₃ sube de 80 → 148 μmol/L y el Glasgow cae de 13 a 11.",
+    question: "¿Qué error bioquímico se cometió y cuál enzima es el nodo central del problema?",
+    pathway: {
+      title: "Ciclo de la Urea — rotura en CPS1",
+      nodes: [
+        { label: "NH₃", sub: "aminoácidos NP", highlight: true },
+        { label: "CPS1", sub: "↓ 70% en cirrosis", blocked: true },
+        { label: "Carbamil-P", sub: "no se forma" },
+        { label: "Urea", sub: "sin excreción" },
+        { label: "NH₃ ↑↑", sub: "cruza BHE → edema astrocitos", highlight: true },
       ],
     },
-    story: "Ingresa a UCI paciente masculino de 58 años con cirrosis hepática etílica Child-Pugh C. Lleva 72 horas sin ingesta oral. Se decide iniciar NP total. La residente de nutrición indica la fórmula estándar con 1.5 g/kg/día de aminoácidos. A las 6 horas, el amoniaco sube de 80 a 148 μmol/L y el Glasgow cae a 11.",
-    question: "¿Qué error bioquímico se cometió y cuál es la proteína enzimática central del problema?",
     keyProteins: [
-      { name: "CPS1", id: "cps1", moduleId: "laboratorio-hepatico", role: "Primera enzima del ciclo de la urea, exclusiva del hígado. En cirrosis avanzada, su actividad cae > 70%.", color: "#f87171" },
-      { name: "Albúmina (HSA)", id: "albumina", moduleId: "laboratorio-hepatico", role: "Marcador de función sintética hepática. Albúmina < 2 g/dL indica déficit grave de síntesis proteica.", color: "#fbbf24" },
+      { name: "CPS1", id: "cps1", role: "Primera enzima del ciclo de la urea. En cirrosis avanzada su actividad cae > 70% por pérdida de masa hepatocitaria.", color: "#f87171" },
+      { name: "Albúmina", id: "albumina", role: "Marcador de síntesis hepática. < 2 g/dL indica fallo sintético grave.", color: "#fbbf24" },
     ],
-    molecular: "La CPS1 (Carbamil Fosfato Sintetasa 1) es la enzima limitante del ciclo de la urea. Usa NH₃ + bicarbonato + 2 ATP para formar carbamil fosfato. En cirrosis Child-Pugh C, la masa hepatocitaria funcional está reducida hasta un 80%, y la CPS1 no puede procesar la carga de nitrógeno de 1.5 g/kg/día de aminoácidos estándar. El exceso de NH₃ cruza la barrera hematoencefálica y es captado por la glutamina sintetasa cerebral, formando glutamina en exceso dentro de los astrocitos. El edema osmótico resultante → encefalopatía.",
-    npImplication: "En hepatopatía grave, la NP estándar puede empeorar la encefalopatía hepática. Las fórmulas de aminoácidos enriquecidas en BCAA (valina, leucina, isoleucina) reducen la competencia con aminoácidos aromáticos por el transporte al SNC.",
+    molecular: "La CPS1 (Carbamil Fosfato Sintetasa 1) es la enzima limitante del ciclo de la urea. En cirrosis Child-Pugh C la masa de hepatocitos funcionales se reduce hasta un 80%. Los 1.5 g/kg/día de aminoácidos aportan una carga de nitrógeno que el hígado no puede convertir en urea. El NH₃ acumulado cruza la barrera hematoencefálica y es captado por la glutamina sintetasa de los astrocitos → glutamina intracellular en exceso → edema osmótico → encefalopatía.",
+    npImplication: "En hepatopatía grave, la NP estándar puede empeorar la encefalopatía. Fórmulas enriquecidas en BCAA (valina, leucina, isoleucina) metabolizadas en músculo (no en hígado) reducen la carga hepática de nitrógeno.",
     management: [
-      "Reducir aminoácidos a 0.8–1.0 g/kg/día inicialmente (< 0.5 g/kg/día si NH₃ > 150 μmol/L)",
-      "Usar fórmulas enriquecidas en BCAA (Aminosteril N-Hepa, HepatAmine)",
-      "Lactulosatitulación por SNG para reducir producción intestinal de NH₃",
-      "Zinc: cofactor esencial de las enzimas del ciclo de la urea (CPS1, OTC, ASS1)",
-      "Monitorear NH₃ cada 6h durante el ajuste de NP",
-      "Objetivo: NH₃ < 60 μmol/L antes de escalar proteínas",
+      "Reducir aminoácidos a 0.8–1.0 g/kg/día (< 0.5 si NH₃ > 150 μmol/L)",
+      "Usar fórmula enriquecida en BCAA (Aminosteril N-Hepa, HepatAmine)",
+      "Zinc 25 mg/día IV: cofactor esencial de CPS1, OTC y ASS1",
+      "Lactulosa por SNG para reducir producción intestinal de NH₃",
+      "Monitorear NH₃ cada 6h durante ajuste — meta < 60 μmol/L",
     ],
-    pearl: "El zinc es cofactor de CPS1. El 75% de los cirróticos tienen déficit de zinc. Suplementar 25 mg/día reduce NH₃ en promedio un 30% — a menudo olvidado en las fórmulas de NP.",
+    pearl: "El zinc es cofactor de CPS1. El 75% de los cirróticos tienen déficit. Suplementar 25 mg/día reduce NH₃ en promedio un 30% — dato frecuentemente olvidado en las fórmulas de NP.",
     quizOptions: [
-      { text: "Aumentar la dosis de aminoácidos para compensar el catabolismo", correct: false, explanation: "Incorrecto. Mayor carga de aminoácidos → más NH₃ → mayor encefalopatía. La restricción inicial es mandatoria." },
-      { text: "Reducir aminoácidos y usar fórmula enriquecida en BCAA", correct: true, explanation: "Correcto. Reducir la carga de nitrógeno y favorecer BCAA (que se metabolizan en músculo, no en hígado) es el estándar de manejo." },
-      { text: "Suspender la NP hasta que mejore el amoniaco", correct: false, explanation: "No recomendado. El ayuno empeora el catabolismo muscular que libera más glutamina → más NH₃. Mantener NP con ajuste es superior." },
-      { text: "Cambiar a nutrición enteral como primera medida", correct: false, explanation: "Si hay indicación de NP (intestino no funcionante o contraindicación de NE), el cambio de ruta no es la solución. El ajuste de la fórmula es prioritario." },
+      { text: "Aumentar aminoácidos para compensar el catabolismo", correct: false, explanation: "Más carga de nitrógeno → más NH₃ → mayor encefalopatía. La restricción es mandatoria." },
+      { text: "Reducir aminoácidos + BCAA + zinc", correct: true, explanation: "Correcto. Reducir carga nitrogenada, usar BCAA (metabolizados en músculo) y suplementar zinc (cofactor de CPS1)." },
+      { text: "Suspender NP hasta que mejore el NH₃", correct: false, explanation: "El ayuno empeora el catabolismo muscular que libera más glutamina → más NH₃. La NP ajustada es superior." },
+      { text: "Cambiar a nutrición enteral", correct: false, explanation: "Si hay indicación de NP, el ajuste de la fórmula es la prioridad, no el cambio de ruta." },
     ],
   },
   {
     id: "refeeding",
     title: "Síndrome de realimentación",
     subtitle: "Hipofosfatemia severa al iniciar NP",
-    icon: "⚡",
-    color: "#fbbf24",
-    specialty: ["UCI", "Nutrición", "Enfermería"],
-    difficulty: "Intermedio",
-    patient: {
-      age: "34 años", sex: "Femenino",
-      diagnosis: "Anorexia nerviosa restrictiva severa. IMC 12.4. Ingresa por fracaso multiorgánico.",
-      vitals: "FC 48 (bradicardia) · PA 80/55 mmHg · Temp 35.2°C",
-      labs: [
-        { name: "Fósforo sérico", value: "0.4 mEq/L", alert: true },
-        { name: "Potasio", value: "2.6 mEq/L", alert: true },
-        { name: "Magnesio", value: "0.5 mEq/L", alert: true },
-        { name: "Glucosa", value: "112 mg/dL" },
-        { name: "Insulina", value: "↑ 28 μU/mL" },
+    icon: "⚡", color: "#fbbf24",
+    specialty: ["UCI", "Nutrición", "Enfermería"], difficulty: "Intermedio",
+    patient: { age: "34 años", sex: "F", diagnosis: "Anorexia nerviosa restrictiva. IMC 12.4. Fracaso multiorgánico", vitals: "FC 48 (bradicardia) · PA 80/55 · Temp 35.2°C" },
+    labs: [
+      { name: "Fósforo",   value: "0.4", unit: "mEq/L",  normal: "2.5–4.5", pct: 9,  alert: true },
+      { name: "Potasio",   value: "2.6", unit: "mEq/L",  normal: "3.5–5.0", pct: 18, alert: true },
+      { name: "Magnesio",  value: "0.5", unit: "mEq/L",  normal: "1.5–2.5", pct: 20, alert: true },
+      { name: "Insulina",  value: "28",  unit: "μU/mL",  normal: "< 25",    pct: 85, alert: true },
+      { name: "Glucosa",   value: "112", unit: "mg/dL",  normal: "70–100",  pct: 55, alert: false },
+    ],
+    story: "Anorexia nerviosa restrictiva severa, semanas de inanición. Al iniciar NP con 25 kcal/kg/día (dextrosa 20%), a las 8 horas: debilidad muscular progresiva, arritmia sinusal y fósforo cae de 0.9 → 0.4 mEq/L.",
+    question: "¿Por qué la glucosa de la NP precipita la hipofosfatemia y qué transportador es el actor molecular?",
+    pathway: {
+      title: "Síndrome realimentación — cascada GLUT4 → fosfato",
+      nodes: [
+        { label: "Glucosa NP ↑", sub: "dextrosa 20%", highlight: true },
+        { label: "Insulina ↑↑", sub: "páncreas responde" },
+        { label: "GLUT4", sub: "transloca a membrana muscular", highlight: true },
+        { label: "Glucólisis masiva", sub: "consume P intracelular" },
+        { label: "P sérico < 0.5", sub: "bradicardia · parálisis", blocked: true },
       ],
     },
-    story: "Paciente de 34 años con anorexia nerviosa restrictiva severa. Semanas de inanición casi completa. Al iniciar NP con 25 kcal/kg/día (bolsa estándar glucosa 20%), a las 8 horas de infusión la enfermera alerta: la paciente presenta debilidad muscular progresiva, arritmia sinusal y el fósforo cae de 0.9 a 0.4 mEq/L. ¿Qué sucede?",
-    question: "¿Por qué la glucosa en la NP desencadena hipofosfatemia y qué proteína es el actor molecular clave?",
     keyProteins: [
-      { name: "GLUT2", id: "glut2", moduleId: "canal-alimentacion", role: "Transportador de glucosa de alta capacidad en hígado y páncreas. La oleada de glucosa activa la captación masiva que consume fosfato intracelular.", color: "#fbbf24" },
-      { name: "GLUT4", id: "glut4", moduleId: "canal-alimentacion", role: "Transportador de glucosa dependiente de insulina en músculo. La insulina (estimulada por la glucosa de la NP) transloca GLUT4 a la membrana → entrada masiva de glucosa al músculo → consumo de fosfato en glucólisis.", color: "#f5a623" },
+      { name: "GLUT4", id: "glut4", role: "Transportador insulino-dependiente de glucosa. La insulina lo transloca masivamente en músculo → entrada masiva de glucosa → agota el fosfato en glucólisis.", color: "#fbbf24" },
+      { name: "GLUT2", id: "glut2", role: "En páncreas: detecta la glucosa de la NP y dispara la secreción de insulina que activa GLUT4.", color: "#f5a623" },
     ],
-    molecular: "En el ayuno prolongado, el fósforo corporal total está gravemente depletado aunque el fósforo sérico parezca 'normal' (redistribución desde el intracelular). Al iniciar glucosa en la NP, la insulina se eleva → GLUT4 se transloca masivamente en músculo esquelético. La glucosa entra en masa. La glucólisis convierte glucosa → glucosa-6-fosfato → fructosa-1,6-bisfosfato usando el escaso fosfato inorgánico disponible. El ATP se agota. Las células musculares y cardíacas no pueden mantener gradientes iónicos → bradicardia, debilidad, parálisis diafragmática.",
-    npImplication: "El síndrome de realimentación es la complicación potencialmente letal más importante al iniciar NP en pacientes desnutridos severos. La ASPEN recomienda iniciar con no más de 10 kcal/kg/día (la mitad del requerimiento) durante los primeros 2 días.",
+    molecular: "En inanición prolongada el fósforo corporal total está depletado, aunque el sérico parezca 'normal' por redistribución desde el intracelular. Al iniciar glucosa, la insulina sube → GLUT4 se transloca masivamente en músculo → glucosa entra en masa → glucólisis usa todo el fosfato disponible para formar ATP. El fósforo sérico colapsa. Sin ATP, las células cardíacas y musculares fallan en mantener gradientes iónicos.",
+    npImplication: "El síndrome de realimentación es la complicación letal más importante al iniciar NP en desnutrición severa. ASPEN recomienda iniciar con ≤ 10 kcal/kg/día los primeros 2 días y monitorear P, K, Mg cada 6h.",
     management: [
-      "PARAR o reducir drásticamente la NP a 5–10 kcal/kg/día",
-      "Reposición URGENTE de fósforo IV: 0.08–0.16 mmol/kg/h, máx 50 mmol en 8h",
-      "Reposición de potasio y magnesio (siempre coexisten)",
-      "Monitoreo ECG continuo mientras P < 0.8 mEq/L",
-      "Escalar NP SOLO cuando P > 1.0 mEq/L durante > 24h",
-      "Tiamina (vitamina B1) 100 mg IV antes de iniciar glucosa: previene encefalopatía de Wernicke",
+      "PARAR o reducir NP a 5–10 kcal/kg/día INMEDIATAMENTE",
+      "Reposición URGENTE de fósforo IV: 0.08–0.16 mmol/kg/h (máx 50 mmol en 8h)",
+      "Reponer K y Mg simultáneamente (siempre coexisten)",
+      "ECG continuo mientras P < 0.8 mEq/L",
+      "Tiamina 100 mg IV ANTES de la glucosa (evita Wernicke)",
+      "Escalar NP solo cuando P > 1.0 mEq/L > 24h consecutivas",
     ],
-    pearl: "La tiamina (B1) es el cofactor de la piruvato deshidrogenasa y la cetoglutarato deshidrogenasa. Sin tiamina, la glucosa se convierte en lactato en lugar de entrar al ciclo de Krebs → acidosis láctica. SIEMPRE dar tiamina antes de glucosa en pacientes con riesgo de realimentación.",
+    pearl: "Tiamina (B1) es cofactor de piruvato deshidrogenasa. Sin ella, la glucosa produce lactato en lugar de entrar al ciclo de Krebs. SIEMPRE dar 100 mg IV antes de iniciar glucosa en pacientes desnutridos.",
     quizOptions: [
-      { text: "Es normal, el fósforo sube espontáneamente al mejorar la nutrición", correct: false, explanation: "Falso. La hipofosfatemia severa (< 0.5 mEq/L) tiene mortalidad > 30% si no se corrige. El fósforo no se corrige solo mientras siga la infusión de glucosa." },
-      { text: "Reducir la NP y reponer fósforo IV urgente", correct: true, explanation: "Correcto. La piedra angular del manejo es reducir la carga de glucosa y reponer fósforo IV de forma agresiva bajo monitoreo ECG." },
-      { text: "Agregar más fósforo a la bolsa de NP para compensar", correct: false, explanation: "Insuficiente e impráctica para corrección urgente. La reposición IV separada es necesaria. Además, agregar exceso de fosfato a la bolsa puede precipitar con el calcio." },
-      { text: "Cambiar la dextrosa por aminoácidos para evitar la insulina", correct: false, explanation: "Parcialmente útil pero no suficiente. Los aminoácidos también estimulan insulina. La restricción calórica total es lo prioritario." },
+      { text: "Es normal, el P sube solo al mejorar la nutrición", correct: false, explanation: "P < 0.5 tiene mortalidad > 30%. No se corrige solo mientras continúe la infusión de glucosa." },
+      { text: "Reducir NP y reponer fósforo IV urgente", correct: true, explanation: "La restricción de glucosa + reposición IV agresiva de P bajo monitoreo ECG es el estándar de manejo." },
+      { text: "Agregar más fósforo a la bolsa de NP", correct: false, explanation: "Insuficiente para corrección urgente, y el exceso de fosfato puede precipitar con el calcio en la bolsa." },
+      { text: "Cambiar dextrosa por aminoácidos", correct: false, explanation: "Los aminoácidos también estimulan insulina. La restricción calórica total es lo prioritario." },
     ],
   },
   {
-    id: "sepsis-hyperglycemia",
+    id: "sepsis",
     title: "Sepsis e hiperglucemia en NP",
-    subtitle: "El dilema de la insulina en UCI",
-    icon: "🦠",
-    color: "#a78bfa",
-    specialty: ["UCI", "Medicina", "Farmacia"],
-    difficulty: "Avanzado",
-    patient: {
-      age: "67 años", sex: "Masculino",
-      diagnosis: "Sepsis por Klebsiella pneumoniae. Postquirúrgico de colon. NP central día 4.",
-      vitals: "FC 118 · PA 90/55 (norepinefrina 0.3 μg/kg/min) · Temp 38.8°C",
-      labs: [
-        { name: "Glucosa", value: "312 mg/dL", alert: true },
-        { name: "Insulina en infusión", value: "12 UI/h (set PVC)" },
-        { name: "PCR", value: "248 mg/L", alert: true },
-        { name: "Lactato", value: "3.8 mmol/L", alert: true },
-        { name: "Cortisol", value: "↑ 45 μg/dL" },
+    subtitle: "Insulina en set PVC · resistencia inflamatoria",
+    icon: "🦠", color: "#a78bfa",
+    specialty: ["UCI", "Medicina", "Farmacia"], difficulty: "Avanzado",
+    patient: { age: "67 años", sex: "M", diagnosis: "Sepsis por Klebsiella. Post-colectomía. NP central día 4", vitals: "FC 118 · PA 90/55 (norepi 0.3) · Temp 38.8°C" },
+    labs: [
+      { name: "Glucosa",    value: "312",  unit: "mg/dL",   normal: "140–180 UCI", pct: 88, alert: true },
+      { name: "PCR",        value: "248",  unit: "mg/L",    normal: "< 5",          pct: 95, alert: true },
+      { name: "Lactato",    value: "3.8",  unit: "mmol/L",  normal: "< 2.0",        pct: 80, alert: true },
+      { name: "Cortisol",   value: "45",   unit: "μg/dL",   normal: "5–25",         pct: 75, alert: true },
+      { name: "Insulina inf", value: "12", unit: "UI/h PVC", normal: "set PE",      pct: 50, alert: true },
+    ],
+    story: "Post-quirúrgico con sepsis activa, NP central día 4, insulina IV a 12 UI/h en set de PVC. Glucosa no baja de 280–320 mg/dL. La farmacéutica revisa el set de infusión... y encuentra que nunca se cambió al inicio.",
+    question: "¿Dos mecanismos concurrentes explican la refractariedad — cuál es el factor oculto de la vía de infusión?",
+    pathway: {
+      title: "Doble bloqueo — inflamación + PVC",
+      nodes: [
+        { label: "TNF-α / IL-6", sub: "sepsis", highlight: true },
+        { label: "IRS-1 Ser307", sub: "fosforilación anómala", blocked: true },
+        { label: "INSR bloqueado", sub: "resistencia posreceptor", blocked: true },
+        { label: "GLUT4 no transloca", sub: "glucosa no entra al músculo" },
+        { label: "Glucosa 280–320", sub: "PVC adsorbe 40–80% insulina", highlight: true },
       ],
     },
-    story: "Paciente en postoperatorio de colectomía con fuga anastomótica, sepsis activa. Lleva 4 días en NP central con insulina en infusión IV a 12 UI/h por set de PVC para controlar glucemia. La glucosa no baja de 280–320 mg/dL a pesar de escalar insulina. El intensivista sospecha resistencia a insulina séptica. La farmacéutica revisa el set de infusión...",
-    question: "¿Cuál es el papel del INSR y qué factor oculto de la vía de infusión explica parte de la refractariedad?",
     keyProteins: [
-      { name: "INSR", id: "insr", moduleId: "senalizacion-hormonal", role: "Receptor tirosina cinasa de insulina. En sepsis, el TNF-α y la IL-6 activan IRS-1 serina-cinasa → bloqueo del receptor → resistencia posreceptor.", color: "#a78bfa" },
-      { name: "mTOR", id: "mtor", moduleId: "senalizacion-hormonal", role: "Integrador de señales anabólicas. La sepsis y el cortisol bloquean mTORC2, lo que fosforila IRS-1 en Ser307 → reduce la señalización del INSR.", color: "#60a5fa" },
+      { name: "INSR", id: "insr", role: "Receptor tirosina cinasa de insulina. En sepsis, TNF-α activa JNK → fosforila IRS-1 en Ser307 → bloqueo posreceptor → GLUT4 no transloca.", color: "#a78bfa" },
+      { name: "mTOR", id: "mtor", role: "El cortisol séptico bloquea mTORC2 → fosforila IRS-1 en Ser307 → amplifica la resistencia a insulina.", color: "#60a5fa" },
     ],
-    molecular: "Dos mecanismos concurren. Primero, la resistencia a la insulina inflamatoria: el TNF-α activa JNK y IKKβ que fosforilan IRS-1 en Ser307 en lugar de Tyr608, bloqueando la señal del INSR. La PI3K no puede activarse → GLUT4 no se transloca → hiperglucemia refractaria. Segundo, la adsorción al PVC: el set de infusión de PVC adsorbe 40–80% de la insulina en los primeros 30 min de contacto. El paciente puede estar recibiendo 4–7 UI/h reales a pesar de que la bomba indica 12 UI/h.",
-    npImplication: "La hiperglucemia > 180 mg/dL en UCI aumenta mortalidad 3×, infecciones 2× y días de ventilación mecánica. La meta es 140–180 mg/dL. Pero la resistencia a insulina séptica + adsorción al PVC hacen que la dosis real administrada sea impredecible.",
+    molecular: "Dos mecanismos concurren. Primero, resistencia inflamatoria: TNF-α activa JNK e IKKβ → fosforilan IRS-1 en Ser307 (en lugar de Tyr608) → PI3K no se activa → GLUT4 no transloca → hiperglucemia. Segundo, adsorción al PVC: el set adsorbe 40–80% de la insulina en los primeros 30 min. El paciente recibe 4–7 UI/h reales a pesar de que la bomba indica 12 UI/h.",
+    npImplication: "La hiperglucemia > 180 mg/dL en UCI aumenta mortalidad 3×. La meta es 140–180. La resistencia séptica + adsorción al PVC hacen que la dosis real sea impredecible sin cambio de set.",
     management: [
-      "Cambiar el set de PVC por set de polietileno (PE) para insulina",
-      "Pre-flush: 50 mL de solución de insulina al 0.05 UI/mL por el nuevo set antes de conectar",
-      "Controlar glucemia cada 1-2h mientras haya inestabilidad hemodinámica",
-      "No escalar insulina ciegamente: investigar adsorción antes de aumentar dosis",
-      "Reducir carga de dextrosa en la NP si glucosa > 250 (< 4 mg/kg/min)",
-      "Zinc (3–5 mg/día en NP) es cofactor de la insulina: su déficit agrava la resistencia",
+      "Cambiar set PVC por set de polietileno (PE) para insulina",
+      "Pre-flush: 50 mL de solución de insulina 0.05 UI/mL por el nuevo set",
+      "Recontrolar glucemia en 1h ANTES de escalar dosis",
+      "Glucemia cada 1–2h mientras haya inestabilidad hemodinámica",
+      "Reducir dextrosa si glucosa > 250 (< 4 mg/kg/min de glucosa)",
+      "Zinc 3–5 mg/día en NP: cofactor de insulina, su déficit agrava resistencia",
     ],
-    pearl: "El set de PVC puede 'secuestrar' hasta el 80% de la insulina. En un paciente con 12 UI/h programadas que no responde, cambiar el set puede ser equivalente a 'aumentar la dosis' instantáneamente sin tocar la bomba. Esta es una causa frecuente de hipoglucemia post-cambio de set si no se reducen las unidades.",
+    pearl: "El set de PVC puede 'secuestrar' hasta el 80% de la insulina. Cambiar el set ANTES de escalar la dosis puede ser equivalente a 'duplicar' la insulina disponible. Riesgo: hipoglucemia severa si se cambia el set sin reducir las UI/h programadas.",
     quizOptions: [
-      { text: "Duplicar la dosis de insulina: 24 UI/h", correct: false, explanation: "Peligroso. Si el set está saturado y se cambia después, el paciente recibiría 24 UI/h reales → hipoglucemia grave. Primero investigar el sistema de infusión." },
-      { text: "Cambiar set a PE, pre-flush, y recontrolar glucemia antes de escalar dosis", correct: true, explanation: "Correcto. La secuencia adecuada: cambiar el set, hacer flush, recontrolar glucemia en 1h. Si persiste > 250, entonces ajustar dosis bajo monitoreo estrecho." },
-      { text: "Suspender la insulina y manejar la hiperglucemia con dieta", correct: false, explanation: "No aplicable: el paciente está en NP total y hay sepsis. La hiperglucemia debe corregirse, no tolerarse." },
-      { text: "Cambiar la NP a fórmula sin glucosa", correct: false, explanation: "No existe NP sin glucosa para uso clínico. La glucosa es necesaria para el cerebro. Se puede reducir la concentración, pero no eliminarla." },
+      { text: "Duplicar la dosis: 24 UI/h", correct: false, explanation: "Peligroso. Si el set se cambia después, el paciente recibiría 24 UI/h reales → hipoglucemia grave." },
+      { text: "Cambiar set a PE, pre-flush, recontrolar antes de escalar", correct: true, explanation: "La secuencia correcta: cambio de set → flush → recontrolar en 1h → ajustar solo si persiste > 250." },
+      { text: "Suspender insulina y manejar con dieta", correct: false, explanation: "No aplica en NP total. La hiperglucemia debe corregirse." },
+      { text: "Cambiar NP a fórmula sin glucosa", correct: false, explanation: "No existe NP sin glucosa para uso clínico. Se puede reducir su concentración, no eliminarla." },
     ],
   },
   {
-    id: "oncology-cachexia",
+    id: "cachexia",
     title: "Caquexia oncológica y mTOR",
     subtitle: "Resistencia anabólica en NP domiciliaria",
-    icon: "🔬",
-    color: "#34d399",
-    specialty: ["Nutrición", "Medicina", "Biotec"],
-    difficulty: "Avanzado",
-    patient: {
-      age: "52 años", sex: "Femenino",
-      diagnosis: "Adenocarcinoma de páncreas estadio IV. NP domiciliaria desde hace 6 semanas.",
-      vitals: "Peso 41 kg (–12 kg en 3 meses) · FC 88 · Estado general ECOG 3",
-      labs: [
-        { name: "Albúmina", value: "2.1 g/dL", alert: true },
-        { name: "PCR", value: "87 mg/L", alert: true },
-        { name: "IGF-1", value: "62 ng/mL ↓", alert: true },
-        { name: "Cortisol", value: "22 μg/dL ↑" },
-        { name: "BCAA totales", value: "↓ 185 μmol/L" },
+    icon: "🔬", color: "#34d399",
+    specialty: ["Nutrición", "Medicina", "Biotec"], difficulty: "Avanzado",
+    patient: { age: "52 años", sex: "F", diagnosis: "Adenocarcinoma páncreas estadio IV · NP domiciliaria 6 semanas", vitals: "Peso 41 kg (–12 kg en 3 meses) · ECOG 3" },
+    labs: [
+      { name: "Albúmina", value: "2.1", unit: "g/dL",   normal: "3.5–5.0", pct: 30, alert: true },
+      { name: "PCR",      value: "87",  unit: "mg/L",    normal: "< 5",     pct: 80, alert: true },
+      { name: "IGF-1",    value: "62",  unit: "ng/mL",   normal: "100–250", pct: 20, alert: true },
+      { name: "Cortisol", value: "22",  unit: "μg/dL",   normal: "5–25",    pct: 68, alert: false },
+      { name: "BCAA",     value: "185", unit: "μmol/L",  normal: "> 400",   pct: 25, alert: true },
+    ],
+    story: "NP domiciliaria 1.5 g/kg/día de aminoácidos, 30 kcal/kg/día desde hace 6 semanas. Sigue perdiendo músculo a 0.5 kg/semana a pesar de recibir 'suficiente' nutrición. ¿Por qué el músculo sigue catabolizando?",
+    question: "¿Qué explica la 'resistencia anabólica' en caquexia y cuál es el nodo molecular central bloqueado?",
+    pathway: {
+      title: "Eje mTORC1 — bloqueado por inflamación tumoral",
+      nodes: [
+        { label: "Leucina / BCAA", sub: "aminoácidos NP" },
+        { label: "mTORC1", sub: "bloqueado por TNF-α · TGF-β", blocked: true },
+        { label: "p70S6K / 4E-BP1", sub: "sin fosforilación" },
+        { label: "Sin síntesis proteica", sub: "anabolismo = 0" },
+        { label: "Proteosoma activo", sub: "MuRF1 / atrogina-1 ↑↑", highlight: true },
       ],
     },
-    story: "Paciente con adenocarcinoma pancreático metastásico. Recibe NP domiciliaria con 1.5 g/kg/día de aminoácidos y 30 kcal/kg/día desde hace 6 semanas. A pesar de recibir 'suficiente' nutrición, continúa perdiendo masa muscular a razón de 0.5 kg/semana. La oncóloga y la nutricionista debaten: ¿por qué el músculo sigue catabolizando si está recibiendo proteínas?",
-    question: "¿Qué explica la 'resistencia anabólica' en caquexia oncológica y cuál es el nodo molecular central?",
     keyProteins: [
-      { name: "mTOR", id: "mtor", moduleId: "senalizacion-hormonal", role: "Sensor maestro de nutrientes y anabolismo. En caquexia, el TNF-α y el TGF-β bloquean mTORC1 a través de AMPK → no hay síntesis proteica muscular a pesar de aminoácidos disponibles.", color: "#34d399" },
+      { name: "mTOR", id: "mtor", role: "Sensor maestro de nutrientes y anabolismo. El TNF-α y TGF-β tumorales bloquean mTORC1 → sin síntesis proteica muscular aunque haya aminoácidos.", color: "#34d399" },
     ],
-    molecular: "El mTOR (mechanistic Target Of Rapamycin) es el nodo integrador de señales anabólicas. Normalmente, los aminoácidos (especialmente leucina) activan el complejo Ragulator-RAG GTPasas → mTORC1 se activa → p70S6K y 4E-BP1 son fosforilados → traducción de proteínas musculares. En caquexia oncológica: el tumor libera TNF-α, IL-6, PIF (Factor Inductor de Proteólisis) y Myostatin. Estos activan NF-κB y FOXO3a → sobreexpresión de ubiquitina-proteasoma (MuRF1, atrogina-1) → degradación proteica 3-5× mayor que en condiciones normales. La síntesis que estimula la NP no compensa la destrucción. La vía mTOR está 'bloqueada' desde arriba.",
-    npImplication: "En caquexia oncológica, aumentar la dosis de aminoácidos por encima de 2 g/kg/día rara vez produce anabolismo neto. La NP puede estabilizar el peso pero no revertir la sarcopenia en un ambiente inflamatorio activo. El objetivo realista es: mantener la calidad de vida, no la reposición completa de masa muscular.",
+    molecular: "Normalmente, la leucina activa el complejo Ragulator-RAG GTPasas → mTORC1 → p70S6K y 4E-BP1 fosforilados → traducción de proteínas musculares. En caquexia: el tumor libera TNF-α, IL-6, PIF y Miostatina → activan NF-κB y FOXO3a → sobreexpresión de MuRF1 y atrogina-1 (ubiquitina-proteasoma) → degradación proteica 3–5× mayor que en condiciones normales. La síntesis que estimula la NP no compensa la destrucción. mTOR está bloqueado desde arriba.",
+    npImplication: "Aumentar aminoácidos > 2 g/kg/día rara vez produce anabolismo neto en caquexia activa. La NP domiciliaria puede estabilizar el peso y permitir completar la quimioterapia, pero la meta realista es calidad de vida, no reposición de masa muscular.",
     management: [
-      "Enriquecer la NP con leucina (o BCAA 2:1:1): activa mTORC1 de forma directa sin pasar por el receptor de insulina",
-      "Omega-3 (EPA 2 g/día): reduce TNF-α e IL-6 → desbloquea parcialmente mTOR. Usar emulsiones ω-3 (SMOFlipid) en lugar de las basadas en soja",
-      "Considerar progesterona o acetato de megestrol: estimula apetito y bloquea parcialmente la proteólisis via NF-κB",
-      "AGRESIVAMENTE: tratar el dolor y la inflamación activa (PCR > 50 mg/L → la NP casi nunca produce anabolismo neto)",
-      "Metas realistas: estabilización del peso, no ganancia de masa muscular",
-      "Fisioterapia pasiva: la contracción muscular activa mTORC1 directamente incluso en resistencia anabólica parcial",
+      "Enriquecer NP con leucina libre (activa mTORC1 directamente sin insulina)",
+      "Emulsión ω-3 (SMOFlipid · EPA 2 g/día): reduce TNF-α e IL-6 → desbloquea mTOR",
+      "Tratar agresivamente el dolor e inflamación (PCR > 50 → NP casi nunca produce anabolismo)",
+      "Fisioterapia pasiva: contracción muscular activa mTORC1 directamente",
+      "Meta realista: estabilización del peso, no ganancia de masa muscular",
     ],
-    pearl: "La leucina es el único aminoácido con capacidad de activar mTORC1 directamente a través de Sestrina2 sin necesidad de insulina. En caquexia, enriquecer la NP con leucina libre (no solo como parte de una proteína) puede mejorar la síntesis proteica hasta un 20% adicional, incluso con mTOR parcialmente bloqueado por la inflamación.",
+    pearl: "La leucina es el único aminoácido que activa mTORC1 directamente a través de Sestrina2, sin necesidad de insulina. Enriquecer la NP con leucina libre (no solo dentro de proteínas completas) puede mejorar la síntesis proteica hasta un 20% adicional incluso con mTOR parcialmente bloqueado.",
     quizOptions: [
-      { text: "Aumentar aminoácidos a 2.5 g/kg/día: más proteína = más músculo", correct: false, explanation: "Falso en caquexia activa. Sin activación de mTORC1, el exceso de aminoácidos se oxida o genera urea. No hay anabolismo neto. El ambiente inflamatorio es el problema real." },
-      { text: "Enriquecer con leucina + omega-3 + tratar la inflamación activa", correct: true, explanation: "Correcto. La estrategia multimodal (leucina activa mTOR directamente, ω-3 reducen TNF-α, antiinflamatorios desbloquean el eje) es la evidencia actual más sólida." },
-      { text: "Suspender la NP: no tiene efecto en caquexia", correct: false, explanation: "Incorrecto. Aunque no revierte la sarcopenia, la NP domiciliaria mejora la calidad de vida, permite completar la quimioterapia y estabiliza el peso. No suspender." },
-      { text: "Iniciar corticoides para estimular el apetito y reducir inflamación", correct: false, explanation: "Parcialmente: los corticoides reducen inflamación pero AUMENTAN el catabolismo muscular a través de FOXO3a. Efecto neto negativo sobre la masa muscular." },
+      { text: "Aumentar aminoácidos a 2.5 g/kg/día", correct: false, explanation: "Sin activación de mTORC1, el exceso se oxida. El ambiente inflamatorio es el problema real." },
+      { text: "Leucina + omega-3 + tratar la inflamación activa", correct: true, explanation: "Leucina activa mTOR directamente, ω-3 reducen TNF-α, antiinflamatorios desbloquean el eje. Es la evidencia actual más sólida." },
+      { text: "Suspender NP: no tiene efecto en caquexia", correct: false, explanation: "La NP domiciliaria mejora calidad de vida y permite completar quimioterapia aunque no revierta la sarcopenia." },
+      { text: "Iniciar corticoides para estimular el apetito", correct: false, explanation: "Los corticoides aumentan el catabolismo muscular via FOXO3a. El efecto neto sobre la masa muscular es negativo." },
     ],
   },
 ];
 
-export default function CasosClient() {
-  const [activeCase, setActiveCase] = useState<ClinicalCase>(CASES[0]);
-  const [step, setStep] = useState<"story" | "molecular" | "management" | "quiz">("story");
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
+const STEP_LABELS: { id: StepId; label: string; icon: string }[] = [
+  { id: "story",      label: "Caso",      icon: "🩺" },
+  { id: "molecular",  label: "Molécula",  icon: "🔬" },
+  { id: "management", label: "Manejo",    icon: "💊" },
+  { id: "quiz",       label: "Quiz",      icon: "🧠" },
+];
 
-  const handleCaseChange = (c: ClinicalCase) => {
-    setActiveCase(c);
-    setStep("story");
-    setSelectedAnswer(null);
-    setShowAnswer(false);
+// Animated lab bar
+function LabBar({ lab, color }: { lab: LabValue; color: string }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 100); return () => clearTimeout(t); }, []);
+  return (
+    <div className="p-3 rounded-xl" style={{ background: lab.alert ? `${color}08` : "rgba(255,255,255,0.02)", border: `1px solid ${lab.alert ? color + "28" : "rgba(255,255,255,0.04)"}` }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs" style={{ color: "#B0BAD4" }}>{lab.name}</span>
+        <div className="text-right">
+          <span className="text-xs font-mono font-bold" style={{ color: lab.alert ? color : "#9BA3BE" }}>{lab.value}</span>
+          <span className="text-xs font-mono" style={{ color: "#6B7BA0" }}> {lab.unit}</span>
+        </div>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+        <div className="h-full rounded-full transition-all duration-1000"
+          style={{ width: visible ? `${lab.pct}%` : "0%", background: lab.alert ? `linear-gradient(90deg,${color}80,${color})` : "rgba(100,120,160,0.4)", transitionTimingFunction: "cubic-bezier(0.34,1.56,0.64,1)" }} />
+      </div>
+      <div className="text-xs mt-1 font-mono" style={{ color: "#6B7BA0" }}>Ref: {lab.normal}</div>
+    </div>
+  );
+}
+
+// Molecular pathway SVG
+function PathwayDiagram({ pathway, color }: { pathway: ClinicalCase["pathway"]; color: string }) {
+  const [step, setStep] = useState(-1);
+  useEffect(() => {
+    let i = -1;
+    const t = setInterval(() => { i++; setStep(i); if (i >= pathway.nodes.length - 1) clearInterval(t); }, 500);
+    return () => clearInterval(t);
+  }, [pathway.nodes.length]);
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.35)", border: `1px solid ${color}18` }}>
+      <p className="text-xs font-mono mb-4" style={{ color: color }}>{pathway.title}</p>
+      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2">
+        {pathway.nodes.map((node, i) => (
+          <div key={i} className="flex items-center gap-2">
+            {/* Node */}
+            <div className="transition-all duration-500"
+              style={{ opacity: i <= step ? 1 : 0, transform: i <= step ? "scale(1)" : "scale(0.7)" }}>
+              <div className="relative px-4 py-2.5 rounded-xl text-center min-w-[110px]"
+                style={{
+                  background: node.blocked ? "rgba(239,68,68,0.08)" : node.highlight ? `${color}12` : "rgba(255,255,255,0.04)",
+                  border: `1.5px solid ${node.blocked ? "#ef444440" : node.highlight ? color + "40" : "rgba(255,255,255,0.08)"}`,
+                  boxShadow: node.highlight && i <= step ? `0 0 14px ${color}25` : "none",
+                }}>
+                {node.blocked && (
+                  <span className="absolute -top-2 -right-2 text-sm" title="Bloqueado">🚫</span>
+                )}
+                <p className="text-xs font-bold font-mono" style={{ color: node.blocked ? "#ef4444" : node.highlight ? color : "#B0BAD4" }}>
+                  {node.label}
+                </p>
+                {node.sub && <p className="text-xs mt-0.5" style={{ color: "#6B7BA0" }}>{node.sub}</p>}
+              </div>
+            </div>
+            {/* Arrow */}
+            {i < pathway.nodes.length - 1 && (
+              <div className="transition-all duration-300 text-sm hidden sm:block"
+                style={{ opacity: i < step ? 1 : 0, color: "#6B7BA0" }}>
+                {pathway.nodes[i + 1].blocked ? "✕" : "→"}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function CasosClient() {
+  const [activeId,  setActiveId]      = useState(CASES[0].id);
+  const [step,      setStep]          = useState<StepId>("story");
+  const [selected,  setSelected]      = useState<number | null>(null);
+  const [revealed,  setRevealed]      = useState(false);
+  const [animIn,    setAnimIn]        = useState(true);
+
+  const c = CASES.find((x) => x.id === activeId) ?? CASES[0];
+
+  const changeCase = (id: string) => {
+    if (id === activeId) return;
+    setAnimIn(false);
+    setTimeout(() => { setActiveId(id); setStep("story"); setSelected(null); setRevealed(false); setAnimIn(true); }, 220);
+  };
+  const changeStep = (s: StepId) => {
+    setAnimIn(false);
+    setTimeout(() => { setStep(s); setAnimIn(true); }, 160);
   };
 
-  const steps: { id: "story" | "molecular" | "management" | "quiz"; label: string; icon: string }[] = [
-    { id: "story",      label: "Caso clínico",   icon: "🩺" },
-    { id: "molecular",  label: "¿Por qué?",      icon: "🔬" },
-    { id: "management", label: "Manejo NP",       icon: "💊" },
-    { id: "quiz",       label: "Quiz rápido",     icon: "🧠" },
-  ];
-
-  const c = activeCase;
+  const stepIdx = STEP_LABELS.findIndex((s) => s.id === step);
 
   return (
     <section className="py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Case selector */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Case cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {CASES.map((cas) => (
-            <button key={cas.id} onClick={() => handleCaseChange(cas)}
-              className="text-left rounded-2xl p-5 transition-all"
+            <button key={cas.id} onClick={() => changeCase(cas.id)}
+              className="text-left rounded-2xl p-4 transition-all"
               style={{
-                background: activeCase.id === cas.id ? `${cas.color}0F` : "#111118",
-                border: `1px solid ${activeCase.id === cas.id ? cas.color + "35" : "rgba(255,255,255,0.05)"}`,
-                boxShadow: activeCase.id === cas.id ? `0 0 25px ${cas.color}08` : "none",
+                background: activeId === cas.id ? `${cas.color}0E` : "#0D0D16",
+                border: `1.5px solid ${activeId === cas.id ? cas.color + "40" : "rgba(255,255,255,0.05)"}`,
+                transform: activeId === cas.id ? "translateY(-3px)" : "none",
+                boxShadow: activeId === cas.id ? `0 8px 28px ${cas.color}12` : "none",
               }}>
-              <span className="text-2xl mb-3 block">{cas.icon}</span>
-              <p className="font-bold text-sm mb-1" style={{ color: activeCase.id === cas.id ? cas.color : "var(--text)" }}>
-                {cas.title}
-              </p>
-              <p className="text-xs" style={{ color: "#6B7BA0" }}>{cas.subtitle}</p>
-              <div className="flex flex-wrap gap-1 mt-3">
-                <span className="text-xs px-2 py-0.5 rounded-full font-mono"
-                  style={{ background: `${cas.color}0A`, color: cas.color, border: `1px solid ${cas.color}20` }}>
-                  {cas.difficulty}
-                </span>
+              <span className="text-2xl block mb-2">{cas.icon}</span>
+              <p className="text-xs font-bold leading-tight mb-1" style={{ color: activeId === cas.id ? cas.color : "var(--text)" }}>{cas.title}</p>
+              <p className="text-xs" style={{ color: "#6B7BA0" }}>{cas.difficulty}</p>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {cas.specialty.slice(0, 2).map((s) => (
+                  <span key={s} className="text-xs px-1.5 py-0.5 rounded font-mono"
+                    style={{ background: `${cas.color}0A`, color: cas.color, border: `1px solid ${cas.color}20` }}>{s}</span>
+                ))}
               </div>
             </button>
           ))}
         </div>
 
-        {/* Main case panel */}
+        {/* Main panel */}
         <div className="rounded-2xl overflow-hidden"
-          style={{ border: `1px solid ${c.color}20`, background: "#0D0D16" }}>
+          style={{ border: `1.5px solid ${c.color}22`, background: "#0A0A12", boxShadow: `0 0 50px ${c.color}06` }}>
 
-          {/* Case header */}
-          <div className="px-6 py-5 flex items-start justify-between flex-wrap gap-4"
-            style={{ borderBottom: `1px solid ${c.color}15`, background: `${c.color}06` }}>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-2xl">{c.icon}</span>
-                <h2 className="font-display font-black text-xl" style={{ color: c.color }}>{c.title}</h2>
-              </div>
-              <p style={{ color: "#B0BAD4", fontSize: "0.9rem" }}>{c.subtitle}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {c.specialty.map((s) => (
-                  <span key={s} className="text-xs px-2.5 py-0.5 rounded-full font-mono"
-                    style={{ background: `${c.color}10`, color: c.color, border: `1px solid ${c.color}20` }}>{s}</span>
-                ))}
+          {/* Header */}
+          <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3"
+            style={{ background: `${c.color}07`, borderBottom: `1px solid ${c.color}15` }}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{c.icon}</span>
+              <div>
+                <h2 className="font-display font-black text-lg" style={{ color: c.color }}>{c.title}</h2>
+                <p className="text-xs" style={{ color: "#B0BAD4" }}>{c.subtitle}</p>
               </div>
             </div>
-            {/* Patient card */}
-            <div className="rounded-xl p-4 min-w-[200px]" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p className="text-xs font-mono mb-2" style={{ color: "#6B7BA0" }}>PACIENTE</p>
-              <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{c.patient.age} · {c.patient.sex}</p>
-              <p className="text-xs mt-1" style={{ color: "#B0BAD4" }}>{c.patient.diagnosis}</p>
-              <p className="text-xs mt-1 font-mono" style={{ color: "#6B7BA0" }}>{c.patient.vitals}</p>
+            {/* Patient chip */}
+            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5" style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <p className="text-xs font-bold" style={{ color: "var(--text)" }}>{c.patient.age} · {c.patient.sex}</p>
+                <p className="text-xs" style={{ color: "#6B7BA0" }}>{c.patient.vitals}</p>
+              </div>
             </div>
           </div>
 
-          {/* Step nav */}
-          <div className="flex border-b" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-            {steps.map((s) => (
-              <button key={s.id} onClick={() => setStep(s.id)}
-                className="flex-1 py-3 text-xs font-mono transition-all"
-                style={{
-                  color: step === s.id ? c.color : "#6B7BA0",
-                  background: step === s.id ? `${c.color}08` : "transparent",
-                  borderBottom: `2px solid ${step === s.id ? c.color : "transparent"}`,
-                }}>
-                {s.icon} {s.label}
-              </button>
+          {/* Step progress */}
+          <div className="px-5 py-3 flex items-center gap-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.04)`, background: "rgba(0,0,0,0.25)" }}>
+            {STEP_LABELS.map((s, i) => (
+              <div key={s.id} className="flex items-center flex-1 last:flex-none">
+                <button onClick={() => changeStep(s.id)}
+                  className="flex flex-col items-center gap-0.5 transition-all w-full"
+                  style={{ opacity: i <= STEP_LABELS.findIndex((x) => x.id === step) ? 1 : 0.45 }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition-all"
+                    style={{
+                      background: step === s.id ? c.color : i < stepIdx ? `${c.color}25` : "rgba(255,255,255,0.04)",
+                      border: `1.5px solid ${step === s.id ? c.color : i < stepIdx ? c.color + "40" : "rgba(255,255,255,0.08)"}`,
+                    }}>
+                    {i < stepIdx ? <span style={{ fontSize: "0.65rem", color: c.color }}>✓</span> : <span>{s.icon}</span>}
+                  </div>
+                  <span className="text-xs font-mono hidden sm:block" style={{ color: step === s.id ? c.color : "#6B7BA0" }}>{s.label}</span>
+                </button>
+                {i < STEP_LABELS.length - 1 && (
+                  <div className="flex-1 h-px mx-1 transition-all" style={{ background: i < stepIdx ? `${c.color}40` : "rgba(255,255,255,0.06)" }} />
+                )}
+              </div>
             ))}
           </div>
 
           {/* Step content */}
-          <div className="p-6">
+          <div className="p-5 transition-all" style={{ opacity: animIn ? 1 : 0, transform: animIn ? "translateY(0)" : "translateY(8px)", transition: "opacity 0.2s, transform 0.2s" }}>
 
+            {/* ── HISTORIA ── */}
             {step === "story" && (
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-                <div>
-                  {/* Story */}
-                  <div className="rounded-xl p-5 mb-5" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}>
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5">
+                <div className="space-y-4">
+                  <div className="rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.04)" }}>
                     <p className="text-xs font-mono mb-3" style={{ color: c.color }}>HISTORIA CLÍNICA</p>
                     <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{c.story}</p>
                   </div>
-                  {/* Question */}
-                  <div className="rounded-xl p-5" style={{ background: `${c.color}08`, border: `1px solid ${c.color}25` }}>
-                    <p className="text-xs font-mono mb-2" style={{ color: c.color }}>PREGUNTA CLAVE</p>
+                  <div className="rounded-2xl p-5" style={{ background: `${c.color}09`, border: `1px solid ${c.color}28` }}>
+                    <p className="text-xs font-mono mb-2" style={{ color: c.color }}>🔍 PREGUNTA CLAVE</p>
                     <p className="text-base font-bold leading-relaxed" style={{ color: "var(--text)" }}>{c.question}</p>
-                    <button onClick={() => setStep("molecular")}
-                      className="mt-4 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                    <button onClick={() => changeStep("molecular")}
+                      className="mt-4 px-5 py-2 rounded-xl text-sm font-bold transition-all"
                       style={{ background: c.color, color: "#0A0A0F" }}>
                       Ver la respuesta molecular →
                     </button>
                   </div>
                 </div>
-
                 {/* Labs */}
-                <div className="rounded-xl p-5" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div className="space-y-2">
                   <p className="text-xs font-mono mb-3" style={{ color: "#6B7BA0" }}>LABORATORIOS</p>
-                  <div className="space-y-2">
-                    {c.patient.labs.map((l) => (
-                      <div key={l.name} className="flex items-center justify-between p-2.5 rounded-lg"
-                        style={{ background: l.alert ? `${c.color}08` : "rgba(255,255,255,0.02)", border: `1px solid ${l.alert ? c.color + "25" : "rgba(255,255,255,0.04)"}` }}>
-                        <span className="text-xs" style={{ color: "#B0BAD4" }}>{l.name}</span>
-                        <span className="text-xs font-mono font-bold" style={{ color: l.alert ? c.color : "#9BA3BE" }}>{l.value}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {c.labs.map((lab) => <LabBar key={lab.name} lab={lab} color={c.color} />)}
                 </div>
               </div>
             )}
 
+            {/* ── MOLECULAR ── */}
             {step === "molecular" && (
               <div className="space-y-5">
+                {/* Pathway diagram */}
+                <PathwayDiagram pathway={c.pathway} color={c.color} />
+
                 {/* Key proteins */}
                 <div>
-                  <p className="text-xs font-mono mb-3" style={{ color: "#6B7BA0" }}>PROTEÍNAS CLAVE EN ESTE CASO</p>
+                  <p className="text-xs font-mono mb-3" style={{ color: "#6B7BA0" }}>PROTEÍNAS CLAVE — explorar en 3D</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {c.keyProteins.map((p) => (
                       <Link key={p.id} href={`/proteina/${p.id}`}
-                        className="rounded-xl p-4 block transition-all hover:opacity-90"
+                        className="rounded-xl p-4 flex items-start gap-3 transition-all hover:opacity-90 group"
                         style={{ background: `${p.color}0A`, border: `1px solid ${p.color}25` }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-mono font-bold text-sm" style={{ color: p.color }}>{p.name}</span>
-                          <span className="text-xs font-mono" style={{ color: "#6B7BA0" }}>Ver 3D ↗</span>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black font-mono flex-shrink-0"
+                          style={{ background: `${p.color}15`, color: p.color, border: `1px solid ${p.color}30` }}>
+                          3D
                         </div>
-                        <p className="text-xs leading-relaxed" style={{ color: "#9BA3BE" }}>{p.role}</p>
+                        <div>
+                          <p className="text-sm font-bold mb-1" style={{ color: p.color }}>{p.name} ↗</p>
+                          <p className="text-xs leading-relaxed" style={{ color: "#9BA3BE" }}>{p.role}</p>
+                        </div>
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                {/* Molecular explanation */}
-                <div className="rounded-xl p-5" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <div className="rounded-xl p-5" style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.04)" }}>
                   <p className="text-xs font-mono mb-3" style={{ color: c.color }}>MECANISMO MOLECULAR</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{c.molecular}</p>
                 </div>
-
-                {/* NP implication */}
-                <div className="rounded-xl p-5" style={{ background: `${c.color}07`, border: `1px solid ${c.color}20` }}>
-                  <p className="text-xs font-mono mb-2" style={{ color: c.color }}>IMPLICACIÓN EN NUTRICIÓN PARENTERAL</p>
+                <div className="rounded-xl p-4" style={{ background: `${c.color}07`, border: `1px solid ${c.color}20` }}>
+                  <p className="text-xs font-mono mb-1.5" style={{ color: c.color }}>IMPLICACIÓN EN NP</p>
                   <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{c.npImplication}</p>
                 </div>
-
-                <button onClick={() => setStep("management")}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                <button onClick={() => changeStep("management")}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold"
                   style={{ background: c.color, color: "#0A0A0F" }}>
                   Ver manejo clínico →
                 </button>
               </div>
             )}
 
+            {/* ── MANEJO ── */}
             {step === "management" && (
               <div className="space-y-5">
-                <div>
-                  <p className="text-xs font-mono mb-3" style={{ color: c.color }}>PROTOCOLO DE MANEJO EN NP</p>
-                  <div className="space-y-2.5">
-                    {c.management.map((m, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl"
-                        style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5"
-                          style={{ background: `${c.color}18`, color: c.color, fontFamily: "monospace" }}>
-                          {i + 1}
-                        </span>
-                        <p className="text-sm leading-relaxed" style={{ color: "#B0BAD4" }}>{m}</p>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {c.management.map((m, i) => (
+                    <div key={i} className="rounded-xl p-4 flex gap-3 items-start"
+                      style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                        style={{ background: `${c.color}18`, color: c.color, fontFamily: "monospace" }}>
+                        {i + 1}
+                      </span>
+                      <p className="text-xs leading-relaxed" style={{ color: "#B0BAD4" }}>{m}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-2xl p-5 flex gap-4" style={{ background: `${c.color}09`, border: `1px solid ${c.color}30` }}>
+                  <span className="text-2xl flex-shrink-0">💡</span>
+                  <div>
+                    <p className="text-xs font-mono mb-2" style={{ color: c.color }}>PERLA CLÍNICA</p>
+                    <p className="text-sm leading-relaxed font-medium" style={{ color: "var(--text)" }}>{c.pearl}</p>
                   </div>
                 </div>
-
-                {/* Pearl */}
-                <div className="rounded-xl p-5" style={{ background: `${c.color}08`, border: `1px solid ${c.color}30` }}>
-                  <p className="text-xs font-mono mb-2" style={{ color: c.color }}>💡 PERLA CLÍNICA</p>
-                  <p className="text-sm leading-relaxed font-medium" style={{ color: "var(--text)" }}>{c.pearl}</p>
-                </div>
-
-                <button onClick={() => setStep("quiz")}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                <button onClick={() => changeStep("quiz")}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold"
                   style={{ background: c.color, color: "#0A0A0F" }}>
                   Poner a prueba lo aprendido →
                 </button>
               </div>
             )}
 
+            {/* ── QUIZ ── */}
             {step === "quiz" && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="rounded-xl p-5" style={{ background: `${c.color}07`, border: `1px solid ${c.color}20` }}>
-                  <p className="text-xs font-mono mb-3" style={{ color: c.color }}>QUIZ RÁPIDO</p>
+                  <p className="text-xs font-mono mb-3" style={{ color: c.color }}>🧠 QUIZ RÁPIDO</p>
                   <p className="text-base font-bold mb-5" style={{ color: "var(--text)" }}>{c.question}</p>
                   <div className="space-y-2.5">
                     {c.quizOptions.map((opt, i) => {
-                      const isSelected = selectedAnswer === i;
-                      const isCorrect = opt.correct;
-                      let bg = "rgba(0,0,0,0.2)";
-                      let border = "rgba(255,255,255,0.06)";
-                      let textColor = "#B0BAD4";
-                      if (showAnswer) {
-                        if (isCorrect) { bg = "rgba(34,197,94,0.08)"; border = "#22c55e40"; textColor = "#4ade80"; }
-                        else if (isSelected && !isCorrect) { bg = "rgba(239,68,68,0.08)"; border = "#ef444440"; textColor = "#ef4444"; }
+                      const isSelected = selected === i;
+                      let bg = "rgba(0,0,0,0.25)"; let border = "rgba(255,255,255,0.06)"; let tc = "#B0BAD4";
+                      if (revealed) {
+                        if (opt.correct)              { bg = "rgba(34,197,94,0.08)";  border = "#22c55e40"; tc = "#4ade80"; }
+                        else if (isSelected)          { bg = "rgba(239,68,68,0.08)"; border = "#ef444440"; tc = "#ef4444"; }
                       } else if (isSelected) {
-                        bg = `${c.color}10`; border = `${c.color}35`; textColor = c.color;
+                        bg = `${c.color}10`; border = `${c.color}35`; tc = c.color;
                       }
                       return (
-                        <button key={i} onClick={() => !showAnswer && setSelectedAnswer(i)}
-                          className="w-full text-left p-3.5 rounded-xl transition-all"
+                        <button key={i} onClick={() => !revealed && setSelected(i)}
+                          className="w-full text-left p-4 rounded-xl transition-all"
                           style={{ background: bg, border: `1px solid ${border}` }}>
                           <div className="flex items-start gap-3">
                             <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-                              style={{ background: "rgba(255,255,255,0.05)", color: textColor, fontFamily: "monospace" }}>
+                              style={{ background: "rgba(255,255,255,0.05)", color: tc, fontFamily: "monospace" }}>
                               {String.fromCharCode(65 + i)}
                             </span>
                             <div>
-                              <p className="text-sm" style={{ color: textColor }}>{opt.text}</p>
-                              {showAnswer && isSelected && (
-                                <p className="text-xs mt-2 leading-relaxed" style={{ color: "#9BA3BE" }}>{opt.explanation}</p>
-                              )}
-                              {showAnswer && isCorrect && !isSelected && (
+                              <p className="text-sm" style={{ color: tc }}>{opt.text}</p>
+                              {revealed && (opt.correct || isSelected) && (
                                 <p className="text-xs mt-2 leading-relaxed" style={{ color: "#9BA3BE" }}>{opt.explanation}</p>
                               )}
                             </div>
@@ -453,27 +524,29 @@ export default function CasosClient() {
                       );
                     })}
                   </div>
-                  {selectedAnswer !== null && !showAnswer && (
-                    <button onClick={() => setShowAnswer(true)}
-                      className="mt-4 px-5 py-2.5 rounded-xl text-sm font-bold"
-                      style={{ background: c.color, color: "#0A0A0F" }}>
-                      Ver respuesta
-                    </button>
-                  )}
-                  {showAnswer && (
-                    <div className="mt-4 flex gap-3">
-                      <button onClick={() => { setSelectedAnswer(null); setShowAnswer(false); }}
-                        className="px-4 py-2 rounded-xl text-sm font-bold"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "#B0BAD4" }}>
-                        Intentar de nuevo
+                  <div className="flex flex-wrap gap-3 mt-5">
+                    {selected !== null && !revealed && (
+                      <button onClick={() => setRevealed(true)}
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold"
+                        style={{ background: c.color, color: "#0A0A0F" }}>
+                        Ver respuesta
                       </button>
-                      <Link href={`/proteina/${c.keyProteins[0]?.id}`}
-                        className="px-4 py-2 rounded-xl text-sm font-bold"
-                        style={{ background: `${c.color}12`, color: c.color, border: `1px solid ${c.color}25` }}>
-                        Ver proteína en 3D →
-                      </Link>
-                    </div>
-                  )}
+                    )}
+                    {revealed && (
+                      <>
+                        <button onClick={() => { setSelected(null); setRevealed(false); }}
+                          className="px-4 py-2 rounded-xl text-sm font-bold"
+                          style={{ background: "rgba(255,255,255,0.05)", color: "#B0BAD4" }}>
+                          Intentar de nuevo
+                        </button>
+                        <Link href={`/proteina/${c.keyProteins[0]?.id}`}
+                          className="px-4 py-2 rounded-xl text-sm font-bold"
+                          style={{ background: `${c.color}12`, color: c.color, border: `1px solid ${c.color}28` }}>
+                          Ver {c.keyProteins[0]?.name} en 3D →
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
