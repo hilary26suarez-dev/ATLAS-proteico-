@@ -143,7 +143,7 @@ export default async function ProteinDetailPage({ params }: Props) {
         </div>
 
         {/* Interactive client component */}
-        <ProteinDetailClient protein={protein as any} moduleColor={mc} />
+        <ProteinDetailClient protein={protein as any} moduleColor={mc} moduleId={parentModule.id} />
 
         {/* Prev / Next navigation */}
         <div className="mt-10 flex items-center justify-between gap-4">

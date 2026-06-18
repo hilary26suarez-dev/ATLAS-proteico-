@@ -1,33 +1,34 @@
 import Link from "next/link";
 import atlasData from "@/data/protein_atlas.json";
+import ModuleProgressBar from "@/components/ModuleProgressBar";
 
 const moduleStyle: Record<string, {
   gradient: string; border: string; badgeBg: string; badgeText: string;
-  badgeBorder: string; dot: string; glow: string; textColor: string;
+  badgeBorder: string; dot: string; glow: string; textColor: string; color: string;
 }> = {
   "canal-alimentacion": {
     gradient: "from-cyan-500/20 to-blue-600/5",
     border: "border-cyan-500/30 hover:border-cyan-500/70",
     badgeBg: "bg-cyan-500/10", badgeText: "text-cyan-400", badgeBorder: "border-cyan-500/20",
-    dot: "bg-cyan-400", glow: "shadow-cyan-500/10", textColor: "text-cyan-400",
+    dot: "bg-cyan-400", glow: "shadow-cyan-500/10", textColor: "text-cyan-400", color: "#22d3ee",
   },
   "laboratorio-hepatico": {
     gradient: "from-amber-500/20 to-orange-600/5",
     border: "border-amber-500/30 hover:border-amber-500/70",
     badgeBg: "bg-amber-500/10", badgeText: "text-amber-400", badgeBorder: "border-amber-500/20",
-    dot: "bg-amber-400", glow: "shadow-amber-500/10", textColor: "text-amber-400",
+    dot: "bg-amber-400", glow: "shadow-amber-500/10", textColor: "text-amber-400", color: "#fbbf24",
   },
   "sistema-defensa": {
     gradient: "from-emerald-500/20 to-teal-600/5",
     border: "border-emerald-500/30 hover:border-emerald-500/70",
     badgeBg: "bg-emerald-500/10", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/20",
-    dot: "bg-emerald-400", glow: "shadow-emerald-500/10", textColor: "text-emerald-400",
+    dot: "bg-emerald-400", glow: "shadow-emerald-500/10", textColor: "text-emerald-400", color: "#34d399",
   },
   "senalizacion-hormonal": {
     gradient: "from-violet-500/20 to-purple-600/5",
     border: "border-violet-500/30 hover:border-violet-500/70",
     badgeBg: "bg-violet-500/10", badgeText: "text-violet-400", badgeBorder: "border-violet-500/20",
-    dot: "bg-violet-400", glow: "shadow-violet-500/10", textColor: "text-violet-400",
+    dot: "bg-violet-400", glow: "shadow-violet-500/10", textColor: "text-violet-400", color: "#a78bfa",
   },
 };
 
@@ -90,6 +91,14 @@ export default function ModulesPage() {
                   </div>
 
                   <p className="text-slate-300 mt-4 text-base leading-relaxed max-w-4xl">{mod.description}</p>
+
+                  {/* Progreso del módulo */}
+                  <div className="mt-4">
+                    <ModuleProgressBar
+                      proteinIds={mod.proteins.map((p) => p.id)}
+                      color={s.color}
+                    />
+                  </div>
 
                   {/* NP Context box */}
                   <div className="mt-4 p-4 rounded-xl bg-black/20 border border-white/5">

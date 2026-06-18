@@ -1,11 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BiblioprotePanel from "./BiblioprotePanel";
 import HPAPanel from "./HPAPanel";
+import MiniQuiz from "./MiniQuiz";
 import ModeToggle from "./ModeToggle";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
+import { useProgress } from "@/hooks/useProgress";
 
 const ProteinViewer3D = dynamic(() => import("./ProteinViewer3D"), {
   ssr: false,
@@ -46,10 +48,17 @@ interface Protein {
 interface Props {
   protein: Protein;
   moduleColor: { text: string; badge: string; badgeText: string; dot: string; border: string };
+  moduleId: string;
 }
 
-export default function ProteinDetailClient({ protein, moduleColor: mc }: Props) {
+export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId }: Props) {
   const [mode, setMode] = useState<"student" | "researcher">("student");
+  const { markVisited } = useProgress();
+
+  useEffect(() => {
+    markVisited(protein.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [protein.id]);
 
   return (
     <div>
@@ -109,31 +118,42 @@ export default function ProteinDetailClient({ protein, moduleColor: mc }: Props)
 
       {/* ── Info panels abajo ──────────────────────────────────────── */}
       {mode === "student" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="glass rounded-2xl border border-cyan-500/20 p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">🎓</span>
-              <h3 className="text-base font-bold text-cyan-400">¿Qué hace esta proteína?</h3>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="glass rounded-2xl border border-cyan-500/20 p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">🎓</span>
+                <h3 className="text-base font-bold text-cyan-400">¿Qué hace esta proteína?</h3>
+              </div>
+              <p className="text-slate-300 leading-relaxed text-sm">{protein.studentSummary}</p>
             </div>
-            <p className="text-slate-300 leading-relaxed text-sm">{protein.studentSummary}</p>
+
+            <div className="glass rounded-2xl border border-amber-500/20 p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">💊</span>
+                <h3 className="text-base font-bold text-amber-400">En Nutrición Parenteral</h3>
+              </div>
+              <p className="text-slate-300 leading-relaxed text-sm">{protein.npRelevance}</p>
+            </div>
+
+            <div className="glass rounded-2xl border border-emerald-500/20 p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">🏥</span>
+                <h3 className="text-base font-bold text-emerald-400">Contexto Clínico</h3>
+              </div>
+              <p className="text-slate-300 leading-relaxed text-sm">{protein.clinicalContext}</p>
+            </div>
           </div>
 
-          <div className="glass rounded-2xl border border-amber-500/20 p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">💊</span>
-              <h3 className="text-base font-bold text-amber-400">En Nutrición Parenteral</h3>
-            </div>
-            <p className="text-slate-300 leading-relaxed text-sm">{protein.npRelevance}</p>
+          {/* Mini-quiz activo recall */}
+          <div className="mb-8">
+            <MiniQuiz
+              moduleId={moduleId}
+              proteinName={protein.name}
+              color="var(--teal)"
+            />
           </div>
-
-          <div className="glass rounded-2xl border border-emerald-500/20 p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">🏥</span>
-              <h3 className="text-base font-bold text-emerald-400">Contexto Clínico</h3>
-            </div>
-            <p className="text-slate-300 leading-relaxed text-sm">{protein.clinicalContext}</p>
-          </div>
-        </div>
+        </>
       )}
 
       {mode === "researcher" && (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import atlasData from "@/data/protein_atlas.json";
 import HeroProtein3D from "@/components/HeroProtein3D";
 import ParticlesBg from "@/components/ParticlesBg";
+import GlobalProgressStat from "@/components/GlobalProgressStat";
 
 const totalProteins = atlasData.modules.reduce((a, m) => a + m.proteins.length, 0);
 
@@ -169,6 +170,9 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="mt-4 px-6">
+            <GlobalProgressStat totalProteins={totalProteins} />
           </div>
         </div>
       </section>

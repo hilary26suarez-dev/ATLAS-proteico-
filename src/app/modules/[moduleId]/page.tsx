@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import atlasData from "@/data/protein_atlas.json";
+import ProteinGridWithProgress from "@/components/ProteinGridWithProgress";
 
 interface Props {
   params: Promise<{ moduleId: string }>;
@@ -8,7 +9,7 @@ interface Props {
 
 const moduleStyle: Record<string, {
   gradient: string; border: string; cardBorder: string;
-  badge: string; badgeText: string; dot: string; textColor: string; ring: string;
+  badge: string; badgeText: string; dot: string; textColor: string; ring: string; color: string;
 }> = {
   "canal-alimentacion": {
     gradient: "from-cyan-500/15 via-transparent to-blue-600/5",
@@ -19,6 +20,7 @@ const moduleStyle: Record<string, {
     dot: "bg-cyan-400",
     textColor: "text-cyan-400",
     ring: "ring-cyan-500/20",
+    color: "#22d3ee",
   },
   "laboratorio-hepatico": {
     gradient: "from-amber-500/15 via-transparent to-orange-600/5",
@@ -29,6 +31,7 @@ const moduleStyle: Record<string, {
     dot: "bg-amber-400",
     textColor: "text-amber-400",
     ring: "ring-amber-500/20",
+    color: "#fbbf24",
   },
   "sistema-defensa": {
     gradient: "from-emerald-500/15 via-transparent to-teal-600/5",
@@ -39,6 +42,7 @@ const moduleStyle: Record<string, {
     dot: "bg-emerald-400",
     textColor: "text-emerald-400",
     ring: "ring-emerald-500/20",
+    color: "#34d399",
   },
   "senalizacion-hormonal": {
     gradient: "from-violet-500/15 via-transparent to-purple-600/5",
@@ -49,6 +53,7 @@ const moduleStyle: Record<string, {
     dot: "bg-violet-400",
     textColor: "text-violet-400",
     ring: "ring-violet-500/20",
+    color: "#a78bfa",
   },
 };
 
@@ -118,65 +123,12 @@ export default async function ModuleDetailPage({ params }: Props) {
           <span className={`ml-3 text-lg font-normal ${s.textColor}`}>({mod.proteins.length})</span>
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-16">
-          {mod.proteins.map((protein) => (
-            <Link
-              key={protein.id}
-              href={`/proteina/${protein.id}`}
-              className={`glass rounded-2xl border ${s.cardBorder} p-5 card-hover group transition-all duration-300`}
-            >
-              {/* Top bar */}
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`font-mono font-black text-xl ${s.textColor}`}>{protein.name}</span>
-                    {protein.pdbId && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-500 font-mono">
-                        PDB: {protein.pdbId}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-300 font-medium leading-tight">{protein.fullName}</p>
-                </div>
-              </div>
-
-              {/* Category + weight */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${s.badge} ${s.badgeText} font-medium`}>
-                  {protein.category}
-                </span>
-                <span className="text-xs text-slate-600">{protein.weight}</span>
-              </div>
-
-              {/* Student summary */}
-              <p className="text-sm text-slate-400 leading-relaxed mb-4 line-clamp-3">
-                {protein.studentSummary}
-              </p>
-
-              {/* NP Relevance preview */}
-              <div className="p-3 rounded-xl bg-black/30 border border-slate-800/50 mb-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">En NP</p>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{protein.npRelevance}</p>
-              </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1 mb-4">
-                {protein.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-500">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <div className={`flex items-center gap-1 text-sm font-semibold ${s.textColor} opacity-60 group-hover:opacity-100 transition-opacity`}>
-                Ver estructura 3D
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </Link>
-          ))}
+        <div className="mb-16">
+          <ProteinGridWithProgress
+            proteins={mod.proteins as Parameters<typeof ProteinGridWithProgress>[0]["proteins"]}
+            style={{ cardBorder: s.cardBorder, badge: s.badge, badgeText: s.badgeText, textColor: s.textColor }}
+            color={s.color}
+          />
         </div>
 
         {/* Other modules */}
