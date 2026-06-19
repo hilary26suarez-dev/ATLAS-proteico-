@@ -123,6 +123,10 @@ export default function DockingViewer3D({
       } catch { return; }
       stageRef.current = stage;
 
+      // Forzar z-index 0 en el canvas NGL para que nunca quede tapado por canvas huérfanos
+      const nglCanvas = containerRef.current.querySelector("canvas");
+      if (nglCanvas) (nglCanvas as HTMLElement).style.zIndex = "0";
+
       const onResize = () => stage.handleResize();
       window.addEventListener("resize", onResize, { passive: true });
       const ro = new ResizeObserver(() => stage.handleResize());
@@ -172,6 +176,14 @@ export default function DockingViewer3D({
       disposed = true; cleanup?.();
       try { stageRef.current?.dispose(); } catch { /* */ }
       stageRef.current = null;
+      // Limpiar canvas huérfanos que NGL pueda haber dejado en el container
+      try {
+        if (containerRef.current) {
+          while (containerRef.current.firstChild) {
+            containerRef.current.removeChild(containerRef.current.firstChild);
+          }
+        }
+      } catch { /* */ }
     };
   }, [pdbId, showLigands, retryKey]);
 
