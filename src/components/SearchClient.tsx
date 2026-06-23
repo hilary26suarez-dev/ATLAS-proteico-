@@ -8,7 +8,7 @@ interface Protein {
   id: string;
   name: string;
   fullName: string;
-  pdbId: string;
+  pdbId?: string;
   gene: string;
   category: string;
   weight: string;
