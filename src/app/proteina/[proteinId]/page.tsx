@@ -1,18 +1,12 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
+import ProteinDetailClient, { type ProteinDetailData } from "@/components/ProteinDetailClient";
 import atlasData from "@/data/protein_atlas.json";
-import ProteinDetailClient from "@/components/ProteinDetailClient";
+import { getModuleTheme } from "@/lib/moduleThemes";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface Props {
   params: Promise<{ proteinId: string }>;
 }
-
-const moduleStyle: Record<string, { text: string; badge: string; badgeText: string; dot: string; border: string }> = {
-  "canal-alimentacion": { text: "text-cyan-400", badge: "bg-cyan-500/10 border-cyan-500/20", badgeText: "text-cyan-400", dot: "bg-cyan-400", border: "border-cyan-500/30" },
-  "laboratorio-hepatico": { text: "text-amber-400", badge: "bg-amber-500/10 border-amber-500/20", badgeText: "text-amber-400", dot: "bg-amber-400", border: "border-amber-500/30" },
-  "sistema-defensa": { text: "text-emerald-400", badge: "bg-emerald-500/10 border-emerald-500/20", badgeText: "text-emerald-400", dot: "bg-emerald-400", border: "border-emerald-500/30" },
-  "senalizacion-hormonal": { text: "text-violet-400", badge: "bg-violet-500/10 border-violet-500/20", badgeText: "text-violet-400", dot: "bg-violet-400", border: "border-violet-500/30" },
-};
 
 export async function generateStaticParams() {
   return atlasData.modules.flatMap((m) => m.proteins.map((p) => ({ proteinId: p.id })));
@@ -35,7 +29,7 @@ export default async function ProteinDetailPage({ params }: Props) {
 
   if (!protein || !parentModule) notFound();
 
-  const mc = moduleStyle[parentModule.id] ?? moduleStyle["canal-alimentacion"];
+  const mc = getModuleTheme(parentModule.id);
 
   // Find prev/next in module
   const siblings = parentModule.proteins;
@@ -52,7 +46,7 @@ export default async function ProteinDetailPage({ params }: Props) {
           <span>/</span>
           <Link href="/modules" className="hover:text-slate-300 transition-colors">Módulos</Link>
           <span>/</span>
-          <Link href={`/modules/${parentModule.id}`} className={`hover:opacity-80 transition-opacity ${mc.text}`}>
+          <Link href={`/modules/${parentModule.id}`} className={`hover:opacity-80 transition-opacity ${mc.textColor}`}>
             {parentModule.name}
           </Link>
           <span>/</span>
@@ -68,7 +62,7 @@ export default async function ProteinDetailPage({ params }: Props) {
                 <div className="flex items-start gap-4 mb-2">
                   <div>
                     <h1 className="text-4xl sm:text-5xl font-black">
-                      <span className={mc.text}>{protein.name}</span>
+                      <span className={mc.textColor}>{protein.name}</span>
                     </h1>
                     <p className="text-xl text-slate-300 font-medium mt-1">{protein.fullName}</p>
                   </div>
@@ -79,13 +73,20 @@ export default async function ProteinDetailPage({ params }: Props) {
                     <span className="font-mono text-xs text-slate-500">GEN</span>
                     <span className="font-mono font-bold">{protein.gene}</span>
                   </div>
+                {protein.pdbId ? (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-300">
                     <span className="font-mono text-xs text-slate-500">PDB</span>
                     <span className="font-mono font-bold">{protein.pdbId}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-300">
-                    <span className="font-mono text-xs text-slate-500">PESO</span>
-                    <span className="font-mono font-bold">{protein.weight}</span>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-sm text-violet-300">
+                    <span className="font-mono text-xs text-violet-200/70">MODELO</span>
+                    <span className="font-mono font-bold">AlphaFold</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-300">
+                  <span className="font-mono text-xs text-slate-500">PESO</span>
+                  <span className="font-mono font-bold">{protein.weight}</span>
                   </div>
                   <div className="px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-400">
                     {protein.category}
@@ -95,17 +96,19 @@ export default async function ProteinDetailPage({ params }: Props) {
 
               {/* Quick links */}
               <div className="flex flex-col gap-2 min-w-[200px]">
-                <a
-                  href={protein.pdbUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-500 hover:text-white transition-all"
-                >
-                  🏛️ RCSB PDB
-                  <svg className="w-3.5 h-3.5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
+                {protein.pdbUrl && (
+                  <a
+                    href={protein.pdbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-500 hover:text-white transition-all"
+                  >
+                    🏛️ RCSB PDB
+                    <svg className="w-3.5 h-3.5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
                 <a
                   href={protein.alphafoldUrl}
                   target="_blank"
@@ -134,7 +137,17 @@ export default async function ProteinDetailPage({ params }: Props) {
         </div>
 
         {/* Interactive client component */}
-        <ProteinDetailClient protein={protein as any} moduleColor={mc} moduleId={parentModule.id} />
+        <ProteinDetailClient
+          protein={protein as ProteinDetailData}
+          moduleColor={{
+            text: mc.textColor,
+            badge: `${mc.badgeBg} ${mc.badgeBorder}`,
+            badgeText: mc.badgeText,
+            dot: mc.dot,
+            border: mc.detailBorder,
+          }}
+          moduleId={parentModule.id}
+        />
 
         {/* Prev / Next navigation */}
         <div className="mt-10 flex items-center justify-between gap-4">
@@ -148,7 +161,7 @@ export default async function ProteinDetailPage({ params }: Props) {
               </svg>
               <div>
                 <p className="text-xs text-slate-600">Anterior</p>
-                <p className={`text-sm font-bold ${mc.text}`}>{prev.name}</p>
+                <p className={`text-sm font-bold ${mc.textColor}`}>{prev.name}</p>
               </div>
             </Link>
           ) : <div />}
@@ -160,7 +173,7 @@ export default async function ProteinDetailPage({ params }: Props) {
             >
               <div>
                 <p className="text-xs text-slate-600">Siguiente</p>
-                <p className={`text-sm font-bold ${mc.text}`}>{next.name}</p>
+                <p className={`text-sm font-bold ${mc.textColor}`}>{next.name}</p>
               </div>
               <svg className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

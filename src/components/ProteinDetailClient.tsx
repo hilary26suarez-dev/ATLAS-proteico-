@@ -1,7 +1,8 @@
 "use client";
 
+import { useProgress } from "@/hooks/useProgress";
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import BiblioprotePanel from "./BiblioprotePanel";
 import CuriosidadesCard from "./CuriosidadesCard";
 import HPAPanel from "./HPAPanel";
@@ -11,7 +12,6 @@ import MiniQuiz from "./MiniQuiz";
 import ModeToggle from "./ModeToggle";
 import ProfessionLens from "./ProfessionLens";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
-import { useProgress } from "@/hooks/useProgress";
 
 const ProteinViewer3D = dynamic(() => import("./ProteinViewer3D"), {
   ssr: false,
@@ -25,7 +25,7 @@ const ProteinViewer3D = dynamic(() => import("./ProteinViewer3D"), {
   ),
 });
 
-interface Protein {
+export interface ProteinDetailData {
   id: string;
   name: string;
   fullName: string;
@@ -50,7 +50,7 @@ interface Protein {
 }
 
 interface Props {
-  protein: Protein;
+  protein: ProteinDetailData;
   moduleColor: { text: string; badge: string; badgeText: string; dot: string; border: string };
   moduleId: string;
 }
@@ -59,6 +59,12 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
   const [mode, setMode] = useState<"student" | "researcher">("student");
   const [profession, setProfession] = useState<"all" | "nursing" | "pharmacy" | "medicine" | "nutrition">("all");
   const { markVisited } = useProgress();
+  const hasExperimentalStructure = Boolean(protein.pdbId);
+  const primaryStructureLabel = hasExperimentalStructure ? protein.pdbId : `AF-${protein.alphafoldId}`;
+  const primaryStructureSource = hasExperimentalStructure ? "RCSB PDB" : "AlphaFold DB";
+  const primaryStructureUrl = hasExperimentalStructure
+    ? protein.pdbUrl
+    : `https://alphafold.ebi.ac.uk/files/AF-${protein.alphafoldId}-F1-model_v4.pdb`;
 
   useEffect(() => {
     markVisited(protein.id);
@@ -92,17 +98,17 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
       <div className={`glass rounded-2xl border ${mc.border} overflow-hidden mb-8`}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800/50">
           <div className="flex items-center gap-2">
-            <span className={`font-mono font-bold ${mc.text}`}>{protein.pdbId}</span>
-            <span className="text-slate-600 text-xs">· RCSB PDB</span>
+            <span className={`font-mono font-bold ${mc.text}`}>{primaryStructureLabel}</span>
+            <span className="text-slate-600 text-xs">· {primaryStructureSource}</span>
           </div>
           <div className="flex gap-2">
             <a
-              href={protein.pdbUrl}
+              href={primaryStructureUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition-colors"
             >
-              Ver en PDB ↗
+              {hasExperimentalStructure ? "Ver en PDB ↗" : "Descargar modelo ↗"}
             </a>
             {mode === "researcher" && (
               <a
@@ -117,7 +123,12 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
           </div>
         </div>
         <div style={{ height: 540 }}>
-          <ProteinViewer3D pdbId={protein.pdbId} proteinName={protein.name} mode={mode} />
+          <ProteinViewer3D
+            pdbId={protein.pdbId}
+            alphafoldId={protein.alphafoldId}
+            proteinName={protein.name}
+            mode={mode}
+          />
         </div>
       </div>
 
@@ -182,14 +193,25 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             <span className="text-xs self-center" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>
               DESCARGAR DATOS →
             </span>
-            <a
-              href={`https://files.rcsb.org/download/${protein.pdbId}.pdb`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-              style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: "var(--teal)" }}
-            >
-              ⬇ PDB ({protein.pdbId})
-            </a>
+            {hasExperimentalStructure ? (
+              <a
+                href={`https://files.rcsb.org/download/${protein.pdbId}.pdb`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: "var(--teal)" }}
+              >
+                ⬇ PDB ({protein.pdbId})
+              </a>
+            ) : (
+              <a
+                href={primaryStructureUrl}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: "var(--teal)" }}
+              >
+                ⬇ Modelo AlphaFold
+              </a>
+            )}
             <a
               href={protein.alphafoldUrl}
               target="_blank" rel="noopener noreferrer"
@@ -238,12 +260,12 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             <h3 className="text-sm font-bold text-slate-400 mb-3">Recursos externos</h3>
             <div className="flex flex-col gap-2">
               {[
-                { label: "RCSB PDB", url: protein.pdbUrl, icon: "🏛️", color: "text-cyan-400" },
+                protein.pdbUrl ? { label: "RCSB PDB", url: protein.pdbUrl, icon: "🏛️", color: "text-cyan-400" } : null,
                 { label: "AlphaFold DB", url: protein.alphafoldUrl, icon: "🤖", color: "text-violet-400" },
                 { label: `UniProt: ${protein.uniprotId}`, url: `https://www.uniprot.org/uniprotkb/${protein.uniprotId}`, icon: "🧬", color: "text-emerald-400" },
-                { label: `PubMed: ${protein.pubmedId}`, url: `https://pubmed.ncbi.nlm.nih.gov/${protein.pubmedId}`, icon: "📄", color: "text-amber-400" },
+                protein.pubmedId ? { label: `PubMed: ${protein.pubmedId}`, url: `https://pubmed.ncbi.nlm.nih.gov/${protein.pubmedId}`, icon: "📄", color: "text-amber-400" } : null,
                 { label: `Human Protein Atlas: ${protein.gene}`, url: `https://www.proteinatlas.org/search/${protein.gene}`, icon: "🗺️", color: "text-rose-400" },
-              ].map((r) => (
+              ].filter((r): r is { label: string; url: string; icon: string; color: string } => Boolean(r)).map((r) => (
                 <a key={r.url} href={r.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all group">
                   <span>{r.icon}</span>

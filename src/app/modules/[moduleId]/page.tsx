@@ -1,61 +1,12 @@
+import ProteinGridWithProgress from "@/components/ProteinGridWithProgress";
+import atlasData from "@/data/protein_atlas.json";
+import { getModuleTheme } from "@/lib/moduleThemes";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import atlasData from "@/data/protein_atlas.json";
-import ProteinGridWithProgress from "@/components/ProteinGridWithProgress";
 
 interface Props {
   params: Promise<{ moduleId: string }>;
 }
-
-const moduleStyle: Record<string, {
-  gradient: string; border: string; cardBorder: string;
-  badge: string; badgeText: string; dot: string; textColor: string; ring: string; color: string;
-}> = {
-  "canal-alimentacion": {
-    gradient: "from-cyan-500/15 via-transparent to-blue-600/5",
-    border: "border-cyan-500/40",
-    cardBorder: "border-cyan-500/20 hover:border-cyan-500/50",
-    badge: "bg-cyan-500/10 border-cyan-500/20",
-    badgeText: "text-cyan-400",
-    dot: "bg-cyan-400",
-    textColor: "text-cyan-400",
-    ring: "ring-cyan-500/20",
-    color: "#22d3ee",
-  },
-  "laboratorio-hepatico": {
-    gradient: "from-amber-500/15 via-transparent to-orange-600/5",
-    border: "border-amber-500/40",
-    cardBorder: "border-amber-500/20 hover:border-amber-500/50",
-    badge: "bg-amber-500/10 border-amber-500/20",
-    badgeText: "text-amber-400",
-    dot: "bg-amber-400",
-    textColor: "text-amber-400",
-    ring: "ring-amber-500/20",
-    color: "#fbbf24",
-  },
-  "sistema-defensa": {
-    gradient: "from-emerald-500/15 via-transparent to-teal-600/5",
-    border: "border-emerald-500/40",
-    cardBorder: "border-emerald-500/20 hover:border-emerald-500/50",
-    badge: "bg-emerald-500/10 border-emerald-500/20",
-    badgeText: "text-emerald-400",
-    dot: "bg-emerald-400",
-    textColor: "text-emerald-400",
-    ring: "ring-emerald-500/20",
-    color: "#34d399",
-  },
-  "senalizacion-hormonal": {
-    gradient: "from-violet-500/15 via-transparent to-purple-600/5",
-    border: "border-violet-500/40",
-    cardBorder: "border-violet-500/20 hover:border-violet-500/50",
-    badge: "bg-violet-500/10 border-violet-500/20",
-    badgeText: "text-violet-400",
-    dot: "bg-violet-400",
-    textColor: "text-violet-400",
-    ring: "ring-violet-500/20",
-    color: "#a78bfa",
-  },
-};
 
 export async function generateStaticParams() {
   return atlasData.modules.map((m) => ({ moduleId: m.id }));
@@ -66,7 +17,7 @@ export default async function ModuleDetailPage({ params }: Props) {
   const mod = atlasData.modules.find((m) => m.id === moduleId);
   if (!mod) notFound();
 
-  const s = moduleStyle[mod.id] ?? moduleStyle["canal-alimentacion"];
+  const s = getModuleTheme(mod.id);
   const allModules = atlasData.modules;
   const otherModules = allModules.filter((m) => m.id !== mod.id);
 
@@ -83,11 +34,11 @@ export default async function ModuleDetailPage({ params }: Props) {
         </div>
 
         {/* Module Hero */}
-        <div className={`glass rounded-3xl border ${s.border} overflow-hidden mb-10`}>
-          <div className={`bg-gradient-to-br ${s.gradient} p-10`}>
+        <div className={`glass rounded-3xl border ${s.detailBorder} overflow-hidden mb-10`}>
+          <div className={`bg-gradient-to-br ${s.detailGradient} p-10`}>
             <div className="flex flex-col lg:flex-row gap-8">
               <div className="flex-1">
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold mb-4 ${s.badge} ${s.badgeText}`}>
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold mb-4 ${s.badgeBg} ${s.badgeBorder} ${s.badgeText}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                   {mod.proteins.length} proteínas en este módulo
                 </div>
@@ -126,7 +77,7 @@ export default async function ModuleDetailPage({ params }: Props) {
         <div className="mb-16">
           <ProteinGridWithProgress
             proteins={mod.proteins as Parameters<typeof ProteinGridWithProgress>[0]["proteins"]}
-            style={{ cardBorder: s.cardBorder, badge: s.badge, badgeText: s.badgeText, textColor: s.textColor }}
+            style={{ cardBorder: s.cardBorder, badge: `${s.badgeBg} ${s.badgeBorder}`, badgeText: s.badgeText, textColor: s.textColor }}
             color={s.color}
           />
         </div>
@@ -136,17 +87,17 @@ export default async function ModuleDetailPage({ params }: Props) {
           <h3 className="text-xl font-bold text-white mb-6">Otros módulos</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {otherModules.map((om) => {
-              const os = moduleStyle[om.id];
+              const os = getModuleTheme(om.id);
               return (
                 <Link
                   key={om.id}
                   href={`/modules/${om.id}`}
-                  className={`glass rounded-xl border ${os?.cardBorder ?? "border-slate-700"} p-4 card-hover group transition-all`}
+                  className={`glass rounded-xl border ${os.cardBorder} p-4 card-hover group transition-all`}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">{om.icon}</span>
                     <div>
-                      <p className={`text-sm font-bold ${os?.textColor ?? "text-slate-300"}`}>{om.name}</p>
+                      <p className={`text-sm font-bold ${os.textColor}`}>{om.name}</p>
                       <p className="text-xs text-slate-500">{om.proteins.length} proteínas</p>
                     </div>
                   </div>

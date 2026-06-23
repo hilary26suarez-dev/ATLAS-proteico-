@@ -3,9 +3,30 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
-  pdbId: string;
+  pdbId?: string;
+  alphafoldId?: string;
   proteinName: string;
   mode: "student" | "researcher";
+}
+
+function getStructureSource(pdbId?: string, alphafoldId?: string) {
+  if (pdbId) {
+    return {
+      sourceLabel: "RCSB PDB",
+      sourceId: pdbId.toUpperCase(),
+      url: `https://files.rcsb.org/download/${pdbId.toUpperCase()}.pdb`,
+    };
+  }
+
+  if (alphafoldId) {
+    return {
+      sourceLabel: "AlphaFold DB",
+      sourceId: alphafoldId.toUpperCase(),
+      url: `https://alphafold.ebi.ac.uk/files/AF-${alphafoldId.toUpperCase()}-F1-model_v4.pdb`,
+    };
+  }
+
+  return null;
 }
 
 declare global {
@@ -60,7 +81,8 @@ function buildParams(rep: RepresentationType, colorScheme: string): Record<strin
   }
 }
 
-export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
+export default function ProteinViewer3D({ pdbId, alphafoldId, proteinName, mode }: Props) {
+  const structure = getStructureSource(pdbId, alphafoldId);
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageRef     = useRef<any>(null);
@@ -108,6 +130,12 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     setColorScheme("chainname");
     lastOkRef.current = { rep: "cartoon", color: "chainname" };
 
+    if (!structure) {
+      setLoadError(`No hay estructura 3D disponible para ${proteinName}.`);
+      setLoading(false);
+      return;
+    }
+
     let stage;
     try {
       stage = new window.NGL.Stage(containerRef.current, {
@@ -145,10 +173,8 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
     const ro = new ResizeObserver(() => stage.handleResize());
     ro.observe(containerRef.current);
 
-    const url = `https://files.rcsb.org/download/${pdbId.toUpperCase()}.pdb`;
-
     stage
-      .loadFile(url, { defaultRepresentation: false })
+      .loadFile(structure.url, { defaultRepresentation: false })
       .then((comp: any) => {
         compRef.current = comp;
         stage.handleResize();           // tamaño correcto antes de renderizar
@@ -162,7 +188,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
         });
       })
       .catch(() => {
-        setLoadError(`Estructura "${pdbId.toUpperCase()}" no disponible en RCSB PDB.`);
+        setLoadError(`No se pudo cargar la estructura ${structure.sourceId} desde ${structure.sourceLabel}.`);
         setLoading(false);
       });
 
@@ -179,7 +205,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
       try { stage.dispose(); } catch (_) { /* ignore */ }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nglReady, pdbId, stageKey]);
+  }, [alphafoldId, nglReady, pdbId, proteinName, stageKey]);
 
   // ── 3. Core: apply representation synchronously ───────────────────
   // Separates remove + add into two independent try/catch blocks.
@@ -464,7 +490,9 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
             </div>
             <div className="text-center">
               <p className="text-sm text-slate-400">Cargando estructura 3D</p>
-              <p className="text-xs text-slate-600 font-mono mt-1">{pdbId.toUpperCase()} · RCSB PDB</p>
+              <p className="text-xs text-slate-600 font-mono mt-1">
+                {structure ? `${structure.sourceId} · ${structure.sourceLabel}` : "Sin estructura cargable"}
+              </p>
             </div>
           </div>
         )}
@@ -485,22 +513,26 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
             <div className="text-4xl">⚠️</div>
             <p className="text-slate-300 text-sm">{loadError}</p>
             <div className="flex gap-3">
-              <a
-                href={`https://alphafold.ebi.ac.uk/entry/${pdbId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-400 text-sm hover:opacity-80 transition-opacity"
-              >
-                Ver en AlphaFold ↗
-              </a>
-              <a
-                href={`https://www.rcsb.org/structure/${pdbId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm hover:opacity-80 transition-opacity"
-              >
-                Ver en RCSB ↗
-              </a>
+              {alphafoldId && (
+                <a
+                  href={`https://alphafold.ebi.ac.uk/entry/${alphafoldId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-400 text-sm hover:opacity-80 transition-opacity"
+                >
+                  Ver en AlphaFold ↗
+                </a>
+              )}
+              {pdbId && (
+                <a
+                  href={`https://www.rcsb.org/structure/${pdbId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm hover:opacity-80 transition-opacity"
+                >
+                  Ver en RCSB ↗
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -513,7 +545,7 @@ export default function ProteinViewer3D({ pdbId, proteinName, mode }: Props) {
           <>
             <div className="absolute bottom-3 left-3 flex items-center gap-2 text-xs text-slate-600">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-              {pdbId.toUpperCase()} · {proteinName}
+              {structure?.sourceId ?? "N/D"} · {proteinName}
             </div>
             <div className="absolute bottom-3 right-3 text-xs text-slate-700 text-right leading-relaxed">
               <p>Arrastrar: rotar · Scroll: zoom</p>

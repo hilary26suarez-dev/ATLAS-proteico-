@@ -1,35 +1,11 @@
-import Link from "next/link";
-import atlasData from "@/data/protein_atlas.json";
+import GlobalProgressStat from "@/components/GlobalProgressStat";
 import HeroProtein3D from "@/components/HeroProtein3D";
 import ParticlesBg from "@/components/ParticlesBg";
-import GlobalProgressStat from "@/components/GlobalProgressStat";
+import atlasData from "@/data/protein_atlas.json";
+import { getModuleTheme } from "@/lib/moduleThemes";
+import Link from "next/link";
 
 const totalProteins = atlasData.modules.reduce((a, m) => a + m.proteins.length, 0);
-
-const allProteinNames = atlasData.modules.flatMap((m) =>
-  m.proteins.map((p) => ({ name: p.name, abbr: p.id.toUpperCase() }))
-);
-
-const moduleAccents: Record<string, {
-  color: string; bg: string; border: string; glow: string; num: string;
-}> = {
-  "canal-alimentacion": {
-    color: "#00FF88", bg: "rgba(0,255,136,0.05)", border: "rgba(0,255,136,0.15)",
-    glow: "rgba(0,255,136,0.10)", num: "01",
-  },
-  "laboratorio-hepatico": {
-    color: "#f5a623", bg: "rgba(245,166,35,0.05)", border: "rgba(245,166,35,0.15)",
-    glow: "rgba(245,166,35,0.10)", num: "02",
-  },
-  "sistema-defensa": {
-    color: "#A855F7", bg: "rgba(168,85,247,0.05)", border: "rgba(168,85,247,0.15)",
-    glow: "rgba(168,85,247,0.10)", num: "03",
-  },
-  "senalizacion-hormonal": {
-    color: "#4A9EFF", bg: "rgba(74,158,255,0.05)", border: "rgba(74,158,255,0.15)",
-    glow: "rgba(74,158,255,0.10)", num: "04",
-  },
-};
 
 export default function Home() {
   return (
@@ -127,7 +103,7 @@ export default function Home() {
             style={{ background: "rgba(0,255,136,0.05)" }}>
             {[
               { n: `${totalProteins}+`, label: "Proteínas", sub: "indexadas" },
-              { n: "4",    label: "Módulos",  sub: "metabólicos" },
+              { n: String(atlasData.modules.length), label: "Módulos", sub: "moleculares" },
               { n: "3D",   label: "Viewer",   sub: "interactivo" },
               { n: "100%", label: "Libre",    sub: "open science" },
             ].map((s) => (
@@ -164,29 +140,31 @@ export default function Home() {
               MÓDULOS MOLECULARES
             </p>
             <h2 className="font-display font-black text-4xl sm:text-5xl" style={{ color: "var(--text)" }}>
-              4 sistemas,<br />
-              <span style={{ color: "var(--teal)" }}>una terapia.</span>
+              {atlasData.modules.length} módulos,<br />
+              <span style={{ color: "var(--teal)" }}>un mismo atlas.</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {atlasData.modules.map((mod) => {
-              const a = moduleAccents[mod.id];
+            {atlasData.modules.map((mod, idx) => {
+              const a = getModuleTheme(mod.id);
+              const num = String(idx + 1).padStart(2, "0");
               return (
                 <Link
                   key={mod.id}
                   href={`/modules/${mod.id}`}
                   className="relative group overflow-hidden card-hover"
                   style={{
-                    background: a.bg,
-                    border: `1px solid ${a.border}`,
+                    background: a.homeBg,
+                    border: `1px solid ${a.homeBorder}`,
                     borderRadius: "12px",
+                    boxShadow: `0 16px 40px -30px ${a.homeGlow}`,
                   }}
                 >
                   {/* Número decorativo */}
                   <span className="absolute -right-4 -bottom-6 font-display font-black select-none pointer-events-none"
                     style={{ fontSize: "8rem", lineHeight: 1, color: a.color, opacity: 0.05 }}>
-                    {a.num}
+                    {num}
                   </span>
 
                   <div className="relative z-10 p-7">
@@ -194,7 +172,7 @@ export default function Home() {
                       <div>
                         <span className="text-xs font-bold tracking-widest mb-2 block"
                           style={{ color: a.color, fontFamily: "var(--font-mono, monospace)" }}>
-                          MÓDULO {a.num}
+                          MÓDULO {num}
                         </span>
                         <h3 className="font-display font-black text-2xl" style={{ color: "var(--text)" }}>
                           {mod.name}

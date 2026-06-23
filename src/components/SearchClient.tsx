@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { getModuleTheme } from "@/lib/moduleThemes";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 interface Protein {
   id: string;
@@ -20,27 +21,6 @@ interface Protein {
   moduleColor: string;
 }
 
-const moduleTextColor: Record<string, string> = {
-  "canal-alimentacion": "text-cyan-400",
-  "laboratorio-hepatico": "text-amber-400",
-  "sistema-defensa": "text-emerald-400",
-  "senalizacion-hormonal": "text-violet-400",
-};
-const moduleBadge: Record<string, string> = {
-  "canal-alimentacion": "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
-  "laboratorio-hepatico": "bg-amber-500/10 border-amber-500/20 text-amber-400",
-  "sistema-defensa": "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-  "senalizacion-hormonal": "bg-violet-500/10 border-violet-500/20 text-violet-400",
-};
-const moduleCardBorder: Record<string, string> = {
-  "canal-alimentacion": "border-cyan-500/20 hover:border-cyan-500/50",
-  "laboratorio-hepatico": "border-amber-500/20 hover:border-amber-500/50",
-  "sistema-defensa": "border-emerald-500/20 hover:border-emerald-500/50",
-  "senalizacion-hormonal": "border-violet-500/20 hover:border-violet-500/50",
-};
-
-const categories = ["Todas", "Transportador", "Bomba Iónica", "Cotransportador", "Enzima", "Citocromo P450", "Enzima Antioxidante", "Enzima Detoxificadora", "Enzima Generadora de ROS", "Factor de Transcripción", "Receptor Tirosina Cinasa", "Receptor Acoplado a Proteína G", "Proteína de Transporte", "Cinasa Reguladora", "Hormona / Citocina"];
-
 export default function SearchClient({ proteins }: { proteins: Protein[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todas");
@@ -57,6 +37,11 @@ export default function SearchClient({ proteins }: { proteins: Protein[] }) {
     });
     return result;
   }, [proteins]);
+
+  const categories = useMemo(
+    () => ["Todas", ...Array.from(new Set(proteins.map((p) => p.category))).sort((a, b) => a.localeCompare(b, "es"))],
+    [proteins]
+  );
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -109,15 +94,19 @@ export default function SearchClient({ proteins }: { proteins: Protein[] }) {
           >
             Todos
           </button>
-          {modules.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setModuleFilter(m.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${moduleFilter === m.id ? `${moduleBadge[m.id]} font-bold` : "bg-slate-900/50 border-slate-800 text-slate-500 hover:text-slate-300"}`}
-            >
-              {m.icon} {m.name.split(" ").slice(0, 2).join(" ")}
-            </button>
-          ))}
+          {modules.map((m) => {
+            const theme = getModuleTheme(m.id);
+            const activeClass = `${theme.badgeBg} ${theme.badgeBorder} ${theme.badgeText} font-bold`;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setModuleFilter(m.id)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${moduleFilter === m.id ? activeClass : "bg-slate-900/50 border-slate-800 text-slate-500 hover:text-slate-300"}`}
+              >
+                {m.icon} {m.name.split(" ").slice(0, 2).join(" ")}
+              </button>
+            );
+          })}
         </div>
 
         <select
@@ -164,9 +153,10 @@ export default function SearchClient({ proteins }: { proteins: Protein[] }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filtered.map((p) => {
-            const borderClass = moduleCardBorder[p.moduleColor] ?? "border-slate-700";
-            const textClass = moduleTextColor[p.moduleColor] ?? "text-slate-300";
-            const badgeClass = moduleBadge[p.moduleColor] ?? "bg-slate-800 border-slate-700 text-slate-400";
+            const theme = getModuleTheme(p.moduleColor);
+            const borderClass = theme.cardBorder;
+            const textClass = theme.textColor;
+            const badgeClass = `${theme.badgeBg} ${theme.badgeBorder} ${theme.badgeText}`;
             return (
               <Link
                 key={p.id}

@@ -1,3 +1,4 @@
+import atlasData from "@/data/protein_atlas.json";
 import type { Metadata } from "next";
 import QuizClient, { type Question } from "./QuizClient";
 
@@ -180,7 +181,7 @@ export default function QuizPage() {
             style={{ fontFamily: "var(--font-mono, monospace)", color: "var(--text-muted)" }}>
             <span>📊 20 preguntas</span>
             <span>·</span>
-            <span>🧬 4 módulos</span>
+            <span>🧬 {atlasData.modules.length} módulos en el atlas</span>
             <span>·</span>
             <span>💡 Datos de investigación real</span>
             <span>·</span>
