@@ -1,198 +1,189 @@
-"use client";
-
-import atlasData from "@/data/protein_atlas.json";
-import { getModuleTheme } from "@/lib/moduleThemes";
 import Link from "next/link";
 
-const ALL = atlasData.modules.flatMap((m) =>
-  m.proteins.map((p) => ({ ...p, moduleId: m.id, moduleName: m.name }))
-);
-const afOnly = ALL.filter((p) => !p.pdbId && p.alphafoldId);
-const withPDB = ALL.filter((p) => p.pdbId).length;
-
-const PLDDT = [
-  { color: "#1d4ed8", label: "> 90", title: "Muy alta confianza", desc: "Modelo comparable a estructura cristalográfica. Posiciones de cadena lateral fiables." },
-  { color: "#22d3ee", label: "70 – 90", title: "Alta confianza", desc: "Posición del esqueleto correcta. Orientación de cadenas laterales con incertidumbre menor." },
-  { color: "#facc15", label: "50 – 70", title: "Baja confianza", desc: "El plegamiento general puede ser correcto, pero los detalles son inciertos." },
-  { color: "#f97316", label: "< 50",  title: "Región desordenada", desc: "Intrínsecamente desordenada in vivo. No proyecta una estructura rígida definida." },
+const TOOLS = [
+  {
+    name: "RCSB PDB",
+    subtitle: "Estructuras experimentales · Rayos X · Cryo-EM",
+    icon: "🏛️",
+    color: "#22d3ee",
+    what: "La base de datos más grande de estructuras proteicas obtenidas experimentalmente. Si una proteína tiene PDB ID en el atlas, su estructura fue resuelta por cristalografía de rayos X, cryo-EM u otros métodos físicos reales.",
+    whenToUse: "Cuando necesitas la estructura 3D más precisa disponible. Resolución en ángstroms. Fuente primaria para publicaciones científicas.",
+    examples: [
+      { label: "Albumina (1AO6)", href: "/proteina/albumina" },
+      { label: "Hemoglobina (2HHB)", href: "/proteina/hemoglobina" },
+      { label: "CYP3A4 (1W0F)", href: "/proteina/cyp3a4" },
+    ],
+    externalHref: "https://www.rcsb.org",
+    externalLabel: "Abrir RCSB PDB",
+    tip: "Escribe el PDB ID directamente en el buscador (ej: 1AO6). Puedes ver la estructura en 3D, descargar el .pdb y ver todas las publicaciones asociadas.",
+  },
+  {
+    name: "AlphaFold EBI",
+    subtitle: "Predicción estructural por IA · DeepMind + EMBL-EBI",
+    icon: "🤖",
+    color: "#a78bfa",
+    what: "AlphaFold predice la estructura 3D de una proteína directamente desde su secuencia de aminoácidos. La base de datos EBI tiene predicciones de más de 200 millones de proteínas con una precisión comparable a la cristalografía.",
+    whenToUse: "Cuando la proteína no tiene estructura experimental disponible. El atlas usa AlphaFold para 28 proteínas sin PDB. El score pLDDT (0–100) indica cuánto confiar en cada región.",
+    examples: [
+      { label: "ANGPTL3 (Q9Y5C1)", href: "/proteina/angptl3" },
+      { label: "LDLR (P01130)", href: "/proteina/ldlr" },
+      { label: "PDH E1α (P08559)", href: "/proteina/pdha1" },
+    ],
+    externalHref: "https://alphafold.ebi.ac.uk",
+    externalLabel: "Abrir AlphaFold EBI",
+    tip: "Busca por nombre de proteína o ID de UniProt. El color en la estructura refleja la confianza: azul oscuro (>90) = muy confiable, naranja (<50) = región desordenada.",
+  },
+  {
+    name: "UniProt",
+    subtitle: "Base de datos universal de proteínas · Secuencia + función",
+    icon: "🧬",
+    color: "#34d399",
+    what: "UniProt es la fuente más completa de información funcional sobre proteínas. Contiene secuencia, función, variantes patogénicas, interacciones, localización celular y referencias bibliográficas curadas manualmente.",
+    whenToUse: "Cuando necesitas información detallada sobre la función de una proteína, sus variantes clínicas conocidas, o su secuencia en formato FASTA para análisis bioinformático.",
+    examples: [
+      { label: "PAH · P12694", href: "/proteina/pah" },
+      { label: "GPX4 · P36969", href: "/proteina/gpx4" },
+      { label: "TTR · P02766", href: "/proteina/ttr" },
+    ],
+    externalHref: "https://www.uniprot.org",
+    externalLabel: "Abrir UniProt",
+    tip: "Los IDs del atlas (alphafoldId / uniprotId) son IDs de UniProt. Pégalo directamente en uniprot.org para ver la ficha completa. La pestaña 'Disease & Variants' muestra variantes patogénicas conocidas.",
+  },
+  {
+    name: "Human Protein Atlas",
+    subtitle: "Expresión en tejidos · Relevancia clínica · Imágenes",
+    icon: "🗺️",
+    color: "#f97316",
+    what: "El Human Protein Atlas mapea dónde se expresa cada proteína en el cuerpo humano — qué tejidos, a qué nivel, y con qué relevancia en enfermedades. Incluye imágenes de inmunohistoquímica y datos de expresión génica.",
+    whenToUse: "Cuando necesitas entender en qué órganos o células es relevante una proteína, o su relación con cáncer u otras enfermedades. Complementa el mecanismo bioquímico con la distribución tisular real.",
+    examples: [
+      { label: "ALB (Hígado)", href: "/proteina/albumina" },
+      { label: "INS (Páncreas)", href: "/proteina/insulin" },
+      { label: "MTHFR (Universal)", href: "/proteina/mthfr" },
+    ],
+    externalHref: "https://www.proteinatlas.org",
+    externalLabel: "Abrir Human Protein Atlas",
+    tip: "En la ficha de cada proteína (modo investigador) hay un panel de HPA integrado. También puedes buscar el gen directamente en proteinatlas.org para ver imágenes de tejidos.",
+  },
+  {
+    name: "PubMed",
+    subtitle: "Literatura científica · NCBI · Artículos peer-reviewed",
+    icon: "📄",
+    color: "#f5a623",
+    what: "PubMed indexa más de 35 millones de artículos biomédicos. Cada proteína en el atlas tiene un PubMed ID de referencia clave. Desde el modo investigador puedes acceder directamente al artículo.",
+    whenToUse: "Para profundizar en evidencia clínica, revisar ensayos sobre intervenciones en NP, o encontrar meta-análisis sobre el rol de una proteína en condiciones específicas.",
+    examples: [
+      { label: "Albumina en NP (PMID 11170407)", href: "/proteina/albumina" },
+      { label: "GPX4 y ferroptosis", href: "/proteina/gpx4" },
+      { label: "Insulina en UCI", href: "/proteina/insulin" },
+    ],
+    externalHref: "https://pubmed.ncbi.nlm.nih.gov",
+    externalLabel: "Abrir PubMed",
+    tip: "Usa filtros: 'Review' para síntesis, 'Clinical Trial' para evidencia de intervención. En el atlas, el PubMed ID de cada proteína está disponible en modo investigador.",
+  },
 ];
 
 export default function AlphaFoldPage() {
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Hero */}
-        <div className="relative mb-14">
-          <div className="absolute inset-0 molecular-grid opacity-40 pointer-events-none rounded-3xl" />
-          <div className="relative glass rounded-3xl border p-10"
-            style={{ borderColor: "rgba(168,85,247,0.18)" }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-5"
-              style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)", color: "#a78bfa", fontFamily: "var(--font-mono,monospace)" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-              Estructuras predichas por IA · EBI AlphaFold DB
-            </div>
-            <h1 className="text-5xl font-black mb-3" style={{ color: "var(--text)" }}>
-              AlphaFold en el Atlas
-            </h1>
-            <p className="text-lg max-w-3xl leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              AlphaFold predice la estructura tridimensional de una proteína directamente a partir de su secuencia de aminoácidos, con una precisión comparable a la cristalografía de rayos X. El atlas usa AlphaFold como fuente primaria para las{" "}
-              <span style={{ color: "#a78bfa", fontWeight: 700 }}>{afOnly.length} proteínas</span> sin estructura experimental disponible.
-            </p>
-
-            {/* Stats */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { n: "195", label: "Proteínas en el atlas", color: "var(--teal)" },
-                { n: withPDB.toString(), label: "Con estructura experimental (PDB)", color: "var(--electric)" },
-                { n: afOnly.length.toString(), label: "Con predicción AlphaFold", color: "#a78bfa" },
-                { n: "2021", label: "Año de publicación de AlphaFold 2", color: "var(--amber)" },
-              ].map((s) => (
-                <div key={s.label} className="glass rounded-xl p-4 border"
-                  style={{ borderColor: `${s.color}20` }}>
-                  <p className="text-3xl font-black mb-1" style={{ color: s.color, fontFamily: "var(--font-mono,monospace)" }}>{s.n}</p>
-                  <p className="text-xs leading-snug" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* pLDDT Guide */}
         <div className="mb-14">
-          <h2 className="text-2xl font-black mb-2" style={{ color: "var(--text)" }}>Escala de confianza pLDDT</h2>
-          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-            AlphaFold asigna a cada residuo un score de confianza (pLDDT, 0–100). El color en la estructura 3D refleja este score.
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-5"
+            style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)", color: "#a78bfa", fontFamily: "var(--font-mono,monospace)" }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+            Toolkit de bioinformática
+          </div>
+          <h1 className="text-5xl font-black mb-3" style={{ color: "var(--text)" }}>
+            Bases de datos científicas
+          </h1>
+          <p className="text-lg max-w-2xl leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            El atlas integra datos de 5 fuentes científicas de referencia mundial. Esta guía explica qué hace cada una, cuándo usarla, y cómo llegar a la información directamente desde el atlas.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PLDDT.map((b) => (
-              <div key={b.label} className="glass rounded-xl border p-5"
-                style={{ borderColor: `${b.color}25`, background: `${b.color}08` }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg flex-shrink-0" style={{ background: b.color }} />
+        </div>
+
+        {/* Tools */}
+        <div className="flex flex-col gap-8">
+          {TOOLS.map((tool) => (
+            <div key={tool.name} className="glass rounded-2xl border overflow-hidden"
+              style={{ borderColor: `${tool.color}25` }}>
+
+              {/* Header */}
+              <div className="px-8 py-6 flex items-start gap-5"
+                style={{ background: `${tool.color}08`, borderBottom: `1px solid ${tool.color}18` }}>
+                <span className="text-4xl flex-shrink-0">{tool.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-3 mb-1">
+                    <h2 className="text-2xl font-black" style={{ color: tool.color }}>{tool.name}</h2>
+                    <a href={tool.externalHref} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-3 py-1 rounded-full font-semibold transition-all hover:opacity-80 flex-shrink-0"
+                      style={{ background: `${tool.color}12`, border: `1px solid ${tool.color}35`, color: tool.color, fontFamily: "var(--font-mono,monospace)" }}>
+                      {tool.externalLabel} ↗
+                    </a>
+                  </div>
+                  <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono,monospace)" }}>{tool.subtitle}</p>
+                </div>
+              </div>
+
+              <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* What + when */}
+                <div className="space-y-4">
                   <div>
-                    <p className="font-black text-lg" style={{ color: b.color, fontFamily: "var(--font-mono,monospace)" }}>{b.label}</p>
-                    <p className="text-xs font-bold" style={{ color: "var(--text)" }}>{b.title}</p>
+                    <p className="text-xs font-mono mb-2" style={{ color: "#5a637a" }}>QUÉ ES</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{tool.what}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-mono mb-2" style={{ color: "#5a637a" }}>CUÁNDO USARLA</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{tool.whenToUse}</p>
                   </div>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{b.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* What AlphaFold means for NP */}
-        <div className="glass rounded-2xl border p-8 mb-14" style={{ borderColor: "rgba(168,85,247,0.15)" }}>
-          <h2 className="text-2xl font-black mb-4" style={{ color: "var(--text)" }}>¿Por qué importa en Nutrición Parenteral?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: "🔬",
-                title: "Mecanismo molecular visible",
-                text: "Ver la estructura de GPX4, ACSL1 o PDHA1 permite entender cómo la deficiencia de selenio, carnitina o tiamina altera el sitio activo — información directa para las fórmulas de NP.",
-                color: "var(--teal)",
-              },
-              {
-                icon: "💊",
-                title: "Dianas farmacológicas",
-                text: "Las estructuras predichas de receptores como PTH1R o PTGDR2 permiten identificar bolsillos de unión para fármacos co-administrados en NP, anticipando interacciones.",
-                color: "#a78bfa",
-              },
-              {
-                icon: "⚗️",
-                title: "Investigación de novo",
-                text: "Para proteínas sin cristal disponible, AlphaFold es la única fuente estructural. El atlas las integra directamente con enlace a la base de datos EBI AlphaFold.",
-                color: "var(--amber)",
-              },
-            ].map((c) => (
-              <div key={c.title}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{c.icon}</span>
-                  <h3 className="font-bold text-sm" style={{ color: c.color }}>{c.title}</h3>
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{c.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+                {/* Tip + examples */}
+                <div className="space-y-4">
+                  <div className="rounded-xl p-4" style={{ background: `${tool.color}08`, border: `1px solid ${tool.color}18` }}>
+                    <p className="text-xs font-mono mb-2" style={{ color: tool.color }}>CÓMO USARLA</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{tool.tip}</p>
+                  </div>
 
-        {/* AF-only proteins grid */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-black" style={{ color: "var(--text)" }}>
-                Proteínas con predicción AlphaFold
-              </h2>
-              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-                {afOnly.length} proteínas del atlas sin estructura cristalográfica · visor AlphaFold integrado en cada ficha
-              </p>
-            </div>
-            <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener noreferrer"
-              className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-              style={{ background: "rgba(168,85,247,0.10)", border: "1px solid rgba(168,85,247,0.30)", color: "#a78bfa", fontFamily: "var(--font-mono,monospace)" }}>
-              EBI AlphaFold DB ↗
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {afOnly.map((p) => {
-              const s = getModuleTheme(p.moduleId);
-              return (
-                <Link
-                  key={p.id}
-                  href={`/proteina/${p.id}`}
-                  className="group glass rounded-xl border p-4 flex flex-col gap-2 transition-all duration-200 hover:scale-[1.01]"
-                  style={{ borderColor: `${s.color}20` }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = `${s.color}45`;
-                    (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${s.color}12`;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = `${s.color}20`;
-                    (e.currentTarget as HTMLElement).style.boxShadow = "";
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold font-mono text-sm" style={{ color: s.color }}>{p.name}</p>
-                      <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--text-muted)" }}>{p.category}</p>
+                  <div>
+                    <p className="text-xs font-mono mb-2" style={{ color: "#5a637a" }}>EN EL ATLAS</p>
+                    <div className="flex flex-col gap-1">
+                      {tool.examples.map((ex) => (
+                        <Link key={ex.label} href={ex.href}
+                          className="flex items-center gap-2 text-sm transition-all hover:opacity-80"
+                          style={{ color: tool.color, fontFamily: "var(--font-mono,monospace)" }}>
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          {ex.label}
+                        </Link>
+                      ))}
                     </div>
-                    <span className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                      style={{ background: "rgba(168,85,247,0.08)", color: "#a78bfa", border: "1px solid rgba(168,85,247,0.2)", fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem" }}>
-                      AF
-                    </span>
                   </div>
-                  <p className="text-xs" style={{ color: "#5a637a", fontFamily: "var(--font-mono,monospace)" }}>
-                    {p.alphafoldId}
-                  </p>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{p.moduleName.split(" ").slice(0,3).join(" ")}</span>
-                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: s.color }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* CTA */}
-        <div className="glass rounded-2xl border p-8 text-center" style={{ borderColor: "rgba(168,85,247,0.15)" }}>
-          <p className="text-xl font-black mb-2" style={{ color: "var(--text)" }}>¿Quieres ver una estructura específica?</p>
+        {/* Bottom CTA */}
+        <div className="mt-12 glass rounded-2xl border p-8 text-center" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+          <p className="text-xl font-black mb-2" style={{ color: "var(--text)" }}>Todas las herramientas están integradas</p>
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-            Cada ficha de proteína incluye visor 3D interactivo — experimental desde RCSB o predicción de AlphaFold EBI.
+            En cada ficha de proteína, el modo Investigador abre paneles de HPA, PubMed y enlaces directos a RCSB, AlphaFold y UniProt.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/explorador"
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
               style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", color: "var(--teal)", fontFamily: "var(--font-mono,monospace)" }}>
-              Explorador del Atlas →
+              Comparar proteínas →
             </Link>
-            <Link href="/buscar"
+            <Link href="/modules"
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
-              style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-muted)", fontFamily: "var(--font-mono,monospace)" }}>
-              🔍 Buscar proteína
+              style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.07)", color: "var(--text-muted)", fontFamily: "var(--font-mono,monospace)" }}>
+              Ver módulos
             </Link>
           </div>
         </div>
