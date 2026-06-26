@@ -239,7 +239,7 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
               </a>
             )}
             <a
-              href={protein.alphafoldUrl}
+              href={protein.alphafoldUrl ?? `https://alphafold.ebi.ac.uk/entry/${protein.alphafoldId}`}
               target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
               style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", color: "#a78bfa" }}
@@ -287,11 +287,11 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             <div className="flex flex-col gap-2">
               {[
                 protein.pdbUrl ? { label: "RCSB PDB", url: protein.pdbUrl, icon: "🏛️", color: "text-cyan-400" } : null,
-                { label: "AlphaFold DB", url: protein.alphafoldUrl, icon: "🤖", color: "text-violet-400" },
+                { label: "AlphaFold DB", url: protein.alphafoldUrl ?? `https://alphafold.ebi.ac.uk/entry/${protein.alphafoldId}`, icon: "🤖", color: "text-violet-400" },
                 { label: `UniProt: ${protein.uniprotId}`, url: `https://www.uniprot.org/uniprotkb/${protein.uniprotId}`, icon: "🧬", color: "text-emerald-400" },
                 protein.pubmedId ? { label: `PubMed: ${protein.pubmedId}`, url: `https://pubmed.ncbi.nlm.nih.gov/${protein.pubmedId}`, icon: "📄", color: "text-amber-400" } : null,
                 { label: `Human Protein Atlas: ${protein.gene}`, url: `https://www.proteinatlas.org/search/${protein.gene}`, icon: "🗺️", color: "text-rose-400" },
-              ].filter((r): r is { label: string; url: string; icon: string; color: string } => Boolean(r)).map((r) => (
+              ].filter((r): r is { label: string; url: string; icon: string; color: string } => r !== null && Boolean(r.url)).map((r) => (
                 <a key={r.url} href={r.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all group">
                   <span>{r.icon}</span>
