@@ -1,303 +1,202 @@
-/**
- * MÓDULO 2: Laboratorio de Proteómica Computacional + AlphaFold
- * 
- * Funcionalidades:
- * - Carga de secuencias de novo
- * - Predicción de estructura con AlphaFold
- * - AlphaMissense: Análisis de patogenicidad de variantes
- * - Visualización de pLDDT confidence scores
- */
+"use client";
 
-'use client';
+import atlasData from "@/data/protein_atlas.json";
+import { getModuleTheme } from "@/lib/moduleThemes";
+import Link from "next/link";
 
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+const ALL = atlasData.modules.flatMap((m) =>
+  m.proteins.map((p) => ({ ...p, moduleId: m.id, moduleName: m.name }))
+);
+const afOnly = ALL.filter((p) => !p.pdbId && p.alphafoldId);
+const withPDB = ALL.filter((p) => p.pdbId).length;
 
-export default function AlphaFoldLabPage() {
-  const [inputSequence, setInputSequence] = useState('');
-  const [predictionStatus, setPredictionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+const PLDDT = [
+  { color: "#1d4ed8", label: "> 90", title: "Muy alta confianza", desc: "Modelo comparable a estructura cristalográfica. Posiciones de cadena lateral fiables." },
+  { color: "#22d3ee", label: "70 – 90", title: "Alta confianza", desc: "Posición del esqueleto correcta. Orientación de cadenas laterales con incertidumbre menor." },
+  { color: "#facc15", label: "50 – 70", title: "Baja confianza", desc: "El plegamiento general puede ser correcto, pero los detalles son inciertos." },
+  { color: "#f97316", label: "< 50",  title: "Región desordenada", desc: "Intrínsecamente desordenada in vivo. No proyecta una estructura rígida definida." },
+];
 
-  const handlePredictStructure = async () => {
-    if (!inputSequence.trim()) {
-      alert('Por favor, ingresa una secuencia proteica');
-      return;
-    }
-
-    setPredictionStatus('loading');
-
-    try {
-      // Simulación: En producción, conectaría con AlphaFold API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setPredictionStatus('success');
-    } catch (error) {
-      setPredictionStatus('error');
-    }
-  };
-
+export default function AlphaFoldPage() {
   return (
-    <div className='min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 p-8'>
-      {/* Header */}
-      <div className='mb-12'>
-        <h1 className='text-5xl font-bold text-white mb-4'>🤖 Laboratorio de Proteómica Computacional</h1>
-        <p className='text-lg text-slate-300'>
-          Predicción de estructura con AlphaFold + Análisis de patogenicidad con AlphaMissense
-        </p>
-      </div>
+    <div className="min-h-screen pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-        {/* Left: Input */}
-        <div className='lg:col-span-1'>
-          <div className='bg-slate-800/50 backdrop-blur rounded-lg p-8 border border-slate-700 sticky top-8'>
-            <h3 className='text-lg font-semibold text-white mb-4'>Ingresa Secuencia</h3>
-
-            <div className='space-y-4'>
-              <div>
-                <label className='text-sm text-slate-400 block mb-2'>Secuencia Proteica (FASTA)</label>
-                <textarea
-                  value={inputSequence}
-                  onChange={(e) => setInputSequence(e.target.value)}
-                  placeholder='>Protein Name
-MKVLTYDDPLSGQLFEYQ...'
-                  className='w-full h-32 bg-slate-900/50 border border-slate-600 rounded px-3 py-2 text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500'
-                />
-              </div>
-
-              <button
-                onClick={handlePredictStructure}
-                disabled={predictionStatus === 'loading'}
-                className={`w-full py-2 px-4 rounded font-semibold transition ${
-                  predictionStatus === 'loading'
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/50'
-                }`}
-              >
-                {predictionStatus === 'loading' ? '⏳ Prediciendo...' : '🔮 Predecir Estructura'}
-              </button>
-
-              {/* Status Indicator */}
-              {predictionStatus === 'success' && (
-                <div className='p-3 bg-green-500/10 border border-green-500/30 rounded'>
-                  <p className='text-sm text-green-300'>✅ Predicción completada</p>
-                </div>
-              )}
+        {/* Hero */}
+        <div className="relative mb-14">
+          <div className="absolute inset-0 molecular-grid opacity-40 pointer-events-none rounded-3xl" />
+          <div className="relative glass rounded-3xl border p-10"
+            style={{ borderColor: "rgba(168,85,247,0.18)" }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-5"
+              style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)", color: "#a78bfa", fontFamily: "var(--font-mono,monospace)" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              Estructuras predichas por IA · EBI AlphaFold DB
             </div>
+            <h1 className="text-5xl font-black mb-3" style={{ color: "var(--text)" }}>
+              AlphaFold en el Atlas
+            </h1>
+            <p className="text-lg max-w-3xl leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              AlphaFold predice la estructura tridimensional de una proteína directamente a partir de su secuencia de aminoácidos, con una precisión comparable a la cristalografía de rayos X. El atlas usa AlphaFold como fuente primaria para las{" "}
+              <span style={{ color: "#a78bfa", fontWeight: 700 }}>{afOnly.length} proteínas</span> sin estructura experimental disponible.
+            </p>
 
-            {/* Quick Examples */}
-            <div className='mt-8 border-t border-slate-700 pt-6'>
-              <h4 className='text-sm font-semibold text-slate-400 mb-3'>Ejemplos</h4>
-              <button
-                onClick={() =>
-                  setInputSequence(`>PAH
-MVHLTPEEKS`)
-                }
-                className='text-xs text-blue-400 hover:text-blue-300 block mb-2'
-              >
-                Cargar PAH (mini)
-              </button>
-              <button
-                onClick={() =>
-                  setInputSequence(`>Insulin_A_B_Chain
-GIVEQCCTSICSLYQLENYCN`)
-                }
-                className='text-xs text-blue-400 hover:text-blue-300 block'
-              >
-                Cargar Insulina (mini)
-              </button>
+            {/* Stats */}
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { n: "195", label: "Proteínas en el atlas", color: "var(--teal)" },
+                { n: withPDB.toString(), label: "Con estructura experimental (PDB)", color: "var(--electric)" },
+                { n: afOnly.length.toString(), label: "Con predicción AlphaFold", color: "#a78bfa" },
+                { n: "2021", label: "Año de publicación de AlphaFold 2", color: "var(--amber)" },
+              ].map((s) => (
+                <div key={s.label} className="glass rounded-xl p-4 border"
+                  style={{ borderColor: `${s.color}20` }}>
+                  <p className="text-3xl font-black mb-1" style={{ color: s.color, fontFamily: "var(--font-mono,monospace)" }}>{s.n}</p>
+                  <p className="text-xs leading-snug" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Right: Results */}
-        <div className='lg:col-span-2'>
-          <Tabs defaultValue='prediction' className='w-full'>
-            <TabsList className='grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700'>
-              <TabsTrigger value='prediction'>Predicción AlphaFold</TabsTrigger>
-              <TabsTrigger value='variants'>AlphaMissense</TabsTrigger>
-            </TabsList>
-
-            {/* Prediction Tab */}
-            <TabsContent value='prediction' className='space-y-6'>
-              <div className='bg-slate-800/50 backdrop-blur rounded-lg p-8 border border-slate-700'>
-                <h3 className='text-xl font-bold text-white mb-6'>Estructura Predicha</h3>
-
-                {predictionStatus === 'idle' && (
-                  <div className='text-center py-16 text-slate-400'>
-                    <p className='text-lg mb-2'>📝 Ingresa una secuencia para comenzar</p>
-                    <p className='text-sm'>La predicción se ejecutará usando AlphaFold 3</p>
+        {/* pLDDT Guide */}
+        <div className="mb-14">
+          <h2 className="text-2xl font-black mb-2" style={{ color: "var(--text)" }}>Escala de confianza pLDDT</h2>
+          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+            AlphaFold asigna a cada residuo un score de confianza (pLDDT, 0–100). El color en la estructura 3D refleja este score.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {PLDDT.map((b) => (
+              <div key={b.label} className="glass rounded-xl border p-5"
+                style={{ borderColor: `${b.color}25`, background: `${b.color}08` }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg flex-shrink-0" style={{ background: b.color }} />
+                  <div>
+                    <p className="font-black text-lg" style={{ color: b.color, fontFamily: "var(--font-mono,monospace)" }}>{b.label}</p>
+                    <p className="text-xs font-bold" style={{ color: "var(--text)" }}>{b.title}</p>
                   </div>
-                )}
-
-                {predictionStatus === 'loading' && (
-                  <div className='text-center py-16'>
-                    <div className='inline-block'>
-                      <div className='w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin' />
-                    </div>
-                    <p className='text-slate-300 mt-4'>Procesando estructura...</p>
-                  </div>
-                )}
-
-                {predictionStatus === 'success' && (
-                  <div className='space-y-6'>
-                    {/* pLDDT Chart */}
-                    <div>
-                      <h4 className='text-white font-semibold mb-4'>Confidence Score (pLDDT)</h4>
-                      <div className='space-y-2'>
-                        {[
-                          { region: 'N-terminal (1-50)', score: 92, color: 'from-green-500 to-emerald-500' },
-                          { region: 'Core domain (51-200)', score: 88, color: 'from-green-500 to-emerald-500' },
-                          { region: 'C-terminal (201-250)', score: 45, color: 'from-yellow-500 to-orange-500' },
-                        ].map((item) => (
-                          <div key={item.region}>
-                            <div className='flex justify-between text-sm mb-1'>
-                              <span className='text-slate-300'>{item.region}</span>
-                              <span className='text-white font-mono'>{item.score}/100</span>
-                            </div>
-                            <div className='w-full bg-slate-900/50 rounded-full h-3'>
-                              <div
-                                className={`bg-gradient-to-r ${item.color} h-3 rounded-full`}
-                                style={{ width: `${item.score}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <p className='text-xs text-slate-400 mt-4'>
-                        Verde (&gt;90): Modelo muy confiable | Amarillo (70-90): Confiable | Rojo (&lt;50): Flexible/Desordenado
-                      </p>
-                    </div>
-
-                    {/* 3D Viewer Placeholder */}
-                    <div className='border-t border-slate-700 pt-6'>
-                      <h4 className='text-white font-semibold mb-4'>Visor 3D</h4>
-                      <div className='w-full h-96 bg-slate-900/50 rounded border border-slate-700 flex items-center justify-center'>
-                        <p className='text-slate-400 text-center'>
-                          🔄 Visor Mol* en construcción<br />
-                          <span className='text-xs mt-2 block'>Mostrará estructura predicha en 3D</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-
-            {/* AlphaMissense Tab */}
-            <TabsContent value='variants' className='space-y-6'>
-              <div className='bg-slate-800/50 backdrop-blur rounded-lg p-8 border border-slate-700'>
-                <h3 className='text-xl font-bold text-white mb-6'>Evaluación de Variantes (AlphaMissense)</h3>
-
-                <div className='space-y-4'>
-                  {[
-                    {
-                      id: '1',
-                      variant: 'PAH:p.Arg408Trp',
-                      consequence: 'Missense',
-                      pathogenicity: 'Likely Pathogenic',
-                      score: 0.92,
-                      description: 'Causa fenilcetonuria grave. Interfiere con interfaz catalítica.',
-                    },
-                    {
-                      id: '2',
-                      variant: 'MTHFR:p.Ala222Val (677C>T)',
-                      consequence: 'Missense',
-                      pathogenicity: 'Uncertain',
-                      score: 0.65,
-                      description: 'Termolábil, reduce actividad 70% en homocigotos.',
-                    },
-                    {
-                      id: '3',
-                      variant: 'HMG-CoA:p.Gly456Ala',
-                      consequence: 'Missense',
-                      pathogenicity: 'Benign',
-                      score: 0.15,
-                      description: 'Sustitución conservada, sin impacto.',
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedVariant(item.variant)}
-                      className={`p-4 rounded border transition cursor-pointer ${
-                        selectedVariant === item.variant
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-slate-600 bg-slate-700/30 hover:bg-slate-700/50'
-                      }`}
-                    >
-                      <div className='flex justify-between items-start mb-2'>
-                        <div>
-                          <p className='font-mono text-white font-semibold'>{item.variant}</p>
-                          <p className='text-xs text-slate-400 mt-1'>{item.consequence}</p>
-                        </div>
-                        <span
-                          className={`text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
-                            item.pathogenicity === 'Likely Pathogenic'
-                              ? 'bg-red-500/20 text-red-300'
-                              : item.pathogenicity === 'Benign'
-                                ? 'bg-green-500/20 text-green-300'
-                                : 'bg-yellow-500/20 text-yellow-300'
-                          }`}
-                        >
-                          {item.pathogenicity}
-                        </span>
-                      </div>
-
-                      <p className='text-sm text-slate-300 mb-3'>{item.description}</p>
-
-                      <div className='flex items-center gap-2'>
-                        <div className='flex-1 bg-slate-900/50 rounded-full h-2'>
-                          <div
-                            className={`h-2 rounded-full transition ${
-                              item.score > 0.7
-                                ? 'bg-red-500'
-                                : item.score > 0.5
-                                  ? 'bg-yellow-500'
-                                  : 'bg-green-500'
-                            }`}
-                            style={{ width: `${item.score * 100}%` }}
-                          />
-                        </div>
-                        <span className='text-xs text-slate-400 font-mono'>{(item.score * 100).toFixed(0)}%</span>
-                      </div>
-                    </div>
-                  ))}
                 </div>
-
-                {selectedVariant && (
-                  <div className='mt-8 p-6 bg-blue-500/10 border border-blue-500/30 rounded'>
-                    <h4 className='text-white font-semibold mb-2'>📊 Detalles: {selectedVariant}</h4>
-                    <p className='text-sm text-slate-300 leading-relaxed'>
-                      AlphaMissense utiliza modelos de aprendizaje profundo entrenados con datos evolutivos y estructurales.
-                      El score refleja la probabilidad de que la variante sea deletérea para la función proteica.
-                    </p>
-                  </div>
-                )}
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{b.desc}</p>
               </div>
-            </TabsContent>
-          </Tabs>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Info Cards */}
-      <div className='mt-12 grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <div className='bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-lg p-6'>
-          <h4 className='text-white font-semibold mb-2'>🧬 Secuencias de Novo</h4>
-          <p className='text-sm text-slate-300'>
-            Carga cualquier secuencia proteica en formato FASTA y obtén predicción de estructura 3D.
-          </p>
+        {/* What AlphaFold means for NP */}
+        <div className="glass rounded-2xl border p-8 mb-14" style={{ borderColor: "rgba(168,85,247,0.15)" }}>
+          <h2 className="text-2xl font-black mb-4" style={{ color: "var(--text)" }}>¿Por qué importa en Nutrición Parenteral?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: "🔬",
+                title: "Mecanismo molecular visible",
+                text: "Ver la estructura de GPX4, ACSL1 o PDHA1 permite entender cómo la deficiencia de selenio, carnitina o tiamina altera el sitio activo — información directa para las fórmulas de NP.",
+                color: "var(--teal)",
+              },
+              {
+                icon: "💊",
+                title: "Dianas farmacológicas",
+                text: "Las estructuras predichas de receptores como PTH1R o PTGDR2 permiten identificar bolsillos de unión para fármacos co-administrados en NP, anticipando interacciones.",
+                color: "#a78bfa",
+              },
+              {
+                icon: "⚗️",
+                title: "Investigación de novo",
+                text: "Para proteínas sin cristal disponible, AlphaFold es la única fuente estructural. El atlas las integra directamente con enlace a la base de datos EBI AlphaFold.",
+                color: "var(--amber)",
+              },
+            ].map((c) => (
+              <div key={c.title}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">{c.icon}</span>
+                  <h3 className="font-bold text-sm" style={{ color: c.color }}>{c.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{c.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className='bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-6'>
-          <h4 className='text-white font-semibold mb-2'>🔮 AlphaFold 3</h4>
-          <p className='text-sm text-slate-300'>
-            Precisión atómica competitiva con cristalografía. Resuelve el enigma del plegamiento proteico.
-          </p>
+
+        {/* AF-only proteins grid */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-black" style={{ color: "var(--text)" }}>
+                Proteínas con predicción AlphaFold
+              </h2>
+              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                {afOnly.length} proteínas del atlas sin estructura cristalográfica · visor AlphaFold integrado en cada ficha
+              </p>
+            </div>
+            <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener noreferrer"
+              className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+              style={{ background: "rgba(168,85,247,0.10)", border: "1px solid rgba(168,85,247,0.30)", color: "#a78bfa", fontFamily: "var(--font-mono,monospace)" }}>
+              EBI AlphaFold DB ↗
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {afOnly.map((p) => {
+              const s = getModuleTheme(p.moduleId);
+              return (
+                <Link
+                  key={p.id}
+                  href={`/proteina/${p.id}`}
+                  className="group glass rounded-xl border p-4 flex flex-col gap-2 transition-all duration-200 hover:scale-[1.01]"
+                  style={{ borderColor: `${s.color}20` }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = `${s.color}45`;
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${s.color}12`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = `${s.color}20`;
+                    (e.currentTarget as HTMLElement).style.boxShadow = "";
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold font-mono text-sm" style={{ color: s.color }}>{p.name}</p>
+                      <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--text-muted)" }}>{p.category}</p>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+                      style={{ background: "rgba(168,85,247,0.08)", color: "#a78bfa", border: "1px solid rgba(168,85,247,0.2)", fontFamily: "var(--font-mono,monospace)", fontSize: "0.6rem" }}>
+                      AF
+                    </span>
+                  </div>
+                  <p className="text-xs" style={{ color: "#5a637a", fontFamily: "var(--font-mono,monospace)" }}>
+                    {p.alphafoldId}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{p.moduleName.split(" ").slice(0,3).join(" ")}</span>
+                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: s.color }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-        <div className='bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/30 rounded-lg p-6'>
-          <h4 className='text-white font-semibold mb-2'>⚠️ Patogenicidad</h4>
-          <p className='text-sm text-slate-300'>
-            AlphaMissense predice impacto fisiológico de variantes genéticas de cambio de sentido.
+
+        {/* CTA */}
+        <div className="glass rounded-2xl border p-8 text-center" style={{ borderColor: "rgba(168,85,247,0.15)" }}>
+          <p className="text-xl font-black mb-2" style={{ color: "var(--text)" }}>¿Quieres ver una estructura específica?</p>
+          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+            Cada ficha de proteína incluye visor 3D interactivo — experimental desde RCSB o predicción de AlphaFold EBI.
           </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Link href="/explorador"
+              className="px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
+              style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", color: "var(--teal)", fontFamily: "var(--font-mono,monospace)" }}>
+              Explorador del Atlas →
+            </Link>
+            <Link href="/buscar"
+              className="px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
+              style={{ background: "var(--bg-raised)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-muted)", fontFamily: "var(--font-mono,monospace)" }}>
+              🔍 Buscar proteína
+            </Link>
+          </div>
         </div>
+
       </div>
     </div>
   );
