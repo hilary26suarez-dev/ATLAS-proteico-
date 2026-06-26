@@ -26,7 +26,7 @@ export default function ModulesPage() {
 
         {/* Module cards */}
         <div className="space-y-8">
-          {atlasData.modules.map((mod, idx) => {
+          {atlasData.modules.filter((m) => m.id !== "vitaminas-y-cofactores").map((mod, idx) => {
           const s = getModuleTheme(mod.id);
             return (
               <div
@@ -112,8 +112,25 @@ export default function ModulesPage() {
           })}
         </div>
 
+        {/* Vitaminas special card */}
+        <div className="mt-8 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+          style={{ background: "rgba(250,204,21,0.06)", border: "1px solid rgba(250,204,21,0.20)" }}>
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">☀️</span>
+            <div>
+              <p className="font-display font-black text-xl" style={{ color: "#facc15" }}>Vitaminas y Cofactores</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>12 moléculas · Visor 3D de coenzimas activas desde RCSB</p>
+            </div>
+          </div>
+          <Link href="/vitaminas"
+            className="flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: "rgba(250,204,21,0.15)", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15", fontFamily: "var(--font-mono, monospace)" }}>
+            Ver módulo especial →
+          </Link>
+        </div>
+
         {/* Bottom CTA */}
-        <div className="mt-16 text-center glass rounded-2xl p-8 border border-slate-800/50">
+        <div className="mt-8 text-center glass rounded-2xl p-8 border border-slate-800/50">
           <h3 className="text-2xl font-bold text-white mb-2">¿Buscas una proteína específica?</h3>
           <p className="text-slate-400 mb-6">Usa el buscador para encontrar cualquier proteína por nombre, gen o función.</p>
           <Link

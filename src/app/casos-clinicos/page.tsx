@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-type Difficulty = "Basico" | "Intermedio" | "Avanzado";
+type Difficulty = "Basico" | "Intermedio" | "Avanzado" | "Experto";
 type ProteinLink = { id: string; label: string };
 
 type DecisionOption = {
@@ -33,6 +33,55 @@ type ClinicalCase = {
 };
 
 const CASES: ClinicalCase[] = [
+  {
+    id: "pku-neonatal",
+    title: "Fenilcetonuria neonatal",
+    disciplines: ["Pediatria", "Nutricion", "Bioquimica"],
+    difficulty: "Basico",
+    duration: 30,
+    summary:
+      "Tamizaje neonatal positivo para PKU. Debes iniciar manejo dietario precoz y prevenir dano neurologico.",
+    objective:
+      "Entender por que PAH deficiente acumula fenilalanina y como la dieta previene el dano cerebral.",
+    labs: ["Fenilalanina: 1240 umol/L (VN < 120)", "Tirosina: 38 umol/L (baja)", "BH4: en evaluacion", "Peso al nacer: adecuado"],
+    proteins: [
+      { id: "pah", label: "PAH (Fenilalanina hidroxilasa)" },
+      { id: "albumina", label: "Albumina" },
+      { id: "ttr", label: "TTR" },
+    ],
+    questions: [
+      {
+        id: "q1",
+        prompt: "La fenilalanina esta en 1240 umol/L porque PAH no puede hacer que?",
+        protein: { id: "pah", label: "PAH" },
+        options: [
+          { text: "Convertir fenilalanina en tirosina usando BH4 como cofactor", isBest: true, rationale: "PAH (fenilalanina hidroxilasa) es la enzima que cataliza Phe → Tyr usando BH4 (tetrahidrobiopterina). Sin PAH funcional, la fenilalanina se acumula y es neurotoxica, mientras la tirosina cae." },
+          { text: "Absorber fenilalanina en el intestino delgado", isBest: false, rationale: "La absorcion intestinal de Phe es normal en PKU — el problema es su metabolismo hepatico por PAH deficiente." },
+          { text: "Eliminar fenilalanina por orina directamente", isBest: false, rationale: "La fenilalanina se acumula en sangre y tejidos — el rinon puede filtrar algo pero no es la via de eliminacion principal." },
+        ],
+      },
+      {
+        id: "q2",
+        prompt: "Por que la albumina baja en PKU no tratada es un signo de alarma?",
+        protein: { id: "albumina", label: "Albumina" },
+        options: [
+          { text: "Indica catabolismo proteico y riesgo de deficit de aminoacidos esenciales", isBest: true, rationale: "En PKU con dieta muy restrictiva sin formula especializada, el lactante puede desarrollar deficit proteico global. La albumina baja refleja ingesta proteica insuficiente — riesgo de malnutricion en el intento de limitar fenilalanina." },
+          { text: "Es normal en todos los neonatos y no tiene significado clinico", isBest: false, rationale: "La albumina neonatal normal es > 3 g/dL. Un valor bajo indica deficit nutricional real." },
+          { text: "Indica exceso de fenilalanina transportada por albumina", isBest: false, rationale: "Aunque albumina transporta Phe, su nivel bajo refleja deficit de sintesis hepatica, no exceso de sustrato." },
+        ],
+      },
+      {
+        id: "q3",
+        prompt: "La TTR (transtiretina) esta baja en este lactante con PKU no tratado. Que indica esto?",
+        protein: { id: "ttr", label: "TTR" },
+        options: [
+          { text: "Desnutricion proteica aguda: TTR es el marcador mas sensible del estado nutricional inmediato", isBest: true, rationale: "TTR tiene vida media de 2 dias, lo que la hace el marcador nutricional mas dinamico. Su caida indica deficit proteico de los ultimos dias — en PKU es consecuencia de dieta inadecuada o formula insuficiente." },
+          { text: "Deficit de vitamina A exclusivamente", isBest: false, rationale: "TTR transporta vitamina A pero su descenso en este contexto refleja principalmente desnutricion proteica, no deficit aislado de vitamina A." },
+          { text: "Es un hallazgo normal en el periodo neonatal", isBest: false, rationale: "La TTR neonatal normal es > 10 mg/dL. Valores bajos indican desnutricion proteica activa." },
+        ],
+      },
+    ],
+  },
   {
     id: "dehydration-altitude",
     title: "Deshidratacion en altitud",
@@ -171,7 +220,7 @@ const CASES: ClinicalCase[] = [
     id: "nosocomial-infection-collagen",
     title: "Infeccion nosocomial y cicatrizacion",
     disciplines: ["Medicina", "Nutricion", "Farmacologia"],
-    difficulty: "Avanzado",
+    difficulty: "Experto",
     duration: 75,
     summary:
       "Postoperatorio con infeccion y mala reparacion tisular. Se requiere control antimicrobiano y soporte metabolico dirigido.",
@@ -216,61 +265,13 @@ const CASES: ClinicalCase[] = [
       },
     ],
   },
-  {
-    id: "pku-neonatal",
-    title: "Fenilcetonuria neonatal",
-    disciplines: ["Pediatria", "Nutricion", "Bioquimica"],
-    difficulty: "Basico",
-    duration: 35,
-    summary:
-      "Tamizaje neonatal positivo para PKU. Debes iniciar manejo dietario precoz y prevenir dano neurologico.",
-    objective:
-      "Entender por que PAH deficiente acumula fenilalanina y como la dieta previene el dano cerebral.",
-    labs: ["Fenilalanina: 1240 umol/L (VN < 120)", "Tirosina: 38 umol/L (baja)", "BH4: en evaluacion", "Peso al nacer: adecuado"],
-    proteins: [
-      { id: "pah", label: "PAH (Fenilalanina hidroxilasa)" },
-      { id: "albumina", label: "Albumina" },
-      { id: "ttr", label: "TTR" },
-    ],
-    questions: [
-      {
-        id: "q1",
-        prompt: "La fenilalanina esta en 1240 umol/L porque PAH no puede hacer que?",
-        protein: { id: "pah", label: "PAH" },
-        options: [
-          { text: "Convertir fenilalanina en tirosina usando BH4 como cofactor", isBest: true, rationale: "PAH (fenilalanina hidroxilasa) es la enzima que cataliza Phe → Tyr usando BH4 (tetrahidrobiopterina). Sin PAH funcional, la fenilalanina se acumula y es neurotoxica, mientras la tirosina cae." },
-          { text: "Absorber fenilalanina en el intestino delgado", isBest: false, rationale: "La absorcion intestinal de Phe es normal en PKU — el problema es su metabolismo hepatico por PAH deficiente." },
-          { text: "Eliminar fenilalanina por orina directamente", isBest: false, rationale: "La fenilalanina se acumula en sangre y tejidos — el rinon puede filtrar algo pero no es la via de eliminacion principal." },
-        ],
-      },
-      {
-        id: "q2",
-        prompt: "Por que la albumina baja en PKU no tratada es un signo de alarma?",
-        protein: { id: "albumina", label: "Albumina" },
-        options: [
-          { text: "Indica catabolismo proteico y riesgo de deficit de aminoacidos esenciales", isBest: true, rationale: "En PKU con dieta muy restrictiva sin formula especializada, el lactante puede desarrollar deficit proteico global. La albumina baja refleja ingesta proteica insuficiente — riesgo de malnutricion en el intento de limitar fenilalanina." },
-          { text: "Es normal en todos los neonatos y no tiene significado clinico", isBest: false, rationale: "La albumina neonatal normal es > 3 g/dL. Un valor bajo indica deficit nutricional real." },
-          { text: "Indica exceso de fenilalanina transportada por albumina", isBest: false, rationale: "Aunque albumina transporta Phe, su nivel bajo refleja deficit de sintesis hepatica, no exceso de sustrato." },
-        ],
-      },
-      {
-        id: "q3",
-        prompt: "La TTR (transtiretina) esta baja en este lactante con PKU no tratado. Que indica esto?",
-        protein: { id: "ttr", label: "TTR" },
-        options: [
-          { text: "Desnutricion proteica aguda: TTR es el marcador mas sensible del estado nutricional inmediato", isBest: true, rationale: "TTR tiene vida media de 2 dias, lo que la hace el marcador nutricional mas dinamico. Su caida indica deficit proteico de los ultimos dias — en PKU es consecuencia de dieta inadecuada o formula insuficiente." },
-          { text: "Deficit de vitamina A exclusivamente", isBest: false, rationale: "TTR transporta vitamina A pero su descenso en este contexto refleja principalmente desnutricion proteica, no deficit aislado de vitamina A." },
-          { text: "Es un hallazgo normal en el periodo neonatal", isBest: false, rationale: "La TTR neonatal normal es > 10 mg/dL. Valores bajos indican desnutricion proteica activa." },
-        ],
-      },
-    ],
-  },
 ];
 
 const difficultyStyle: Record<Difficulty, { color: string; border: string; bg: string }> = {
-  Basico: { color: "#22d3ee", border: "rgba(34,211,238,0.22)", bg: "rgba(34,211,238,0.08)" },
-  Intermedio: { color: "#f5a623", border: "rgba(245,166,35,0.22)", bg: "rgba(245,166,35,0.08)" },
-  Avanzado: { color: "#ef4444", border: "rgba(239,68,68,0.24)", bg: "rgba(239,68,68,0.08)" },
+  Basico:    { color: "#22d3ee", border: "rgba(34,211,238,0.22)",  bg: "rgba(34,211,238,0.08)" },
+  Intermedio:{ color: "#f5a623", border: "rgba(245,166,35,0.22)",  bg: "rgba(245,166,35,0.08)" },
+  Avanzado:  { color: "#ef4444", border: "rgba(239,68,68,0.24)",   bg: "rgba(239,68,68,0.08)" },
+  Experto:   { color: "#a855f7", border: "rgba(168,85,247,0.28)",  bg: "rgba(168,85,247,0.10)" },
 };
 
 export default function CasosClinicosPage() {

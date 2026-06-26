@@ -6,12 +6,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:full": "eslint .",
+    "clean": "rmdir /s /q .next && rmdir /s /q C:\\next-cache"
+  },
+  "engines": {
+    "node": "22.x"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.15",
+    "3dmol": "^2.1.0",
+    "axios": "^1.18.1",
+    "cheerio": "^1.2.0",
+    "molstar": "^4.1.1",
     "next": "16.2.7",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

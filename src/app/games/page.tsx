@@ -66,6 +66,45 @@ const DRILLS: Drill[] = [
       { text: "Zinc — cofactor metaloenzimatico de PAH", correct: false, rationale: "PAH es una enzima de hierro no-hemo (Fe3+), no zinc. El hierro del sitio activo transfiere electrones durante la hidroxilacion." },
     ],
   },
+  {
+    id: "d5",
+    title: "Neurociencia Clinica",
+    focus: "Farmacos y sinapsis colinergica",
+    proteinId: "ache",
+    proteinLabel: "Acetilcolinesterasa (AChE)",
+    question: "Un paciente con Alzheimer leve inicia donepezilo. Por que un inhibidor de AChE mejora la cognicion?",
+    choices: [
+      { text: "Bloquea la degradacion de acetilcolina en la sinapsis y prolonga su efecto sobre el receptor muscarinico", correct: true, rationale: "La AChE hidroliza la ACh en milisegundos. Al inhibirla, la ACh acumulada activa mas tiempo los receptores M1 corticales mejorando atencion y memoria. Este es el mecanismo de todos los inhibidores de AChE aprobados en demencia." },
+      { text: "Regenera las neuronas colinergicas perdidas en el nucleo basal de Meynert", correct: false, rationale: "Los inhibidores de AChE no regeneran neuronas: actuan sobre la sinapsis residual. El nucleo basal de Meynert sigue deteriorandose; el farmaco solo compensa la perdida funcional." },
+      { text: "Aumenta la sintesis de ACh elevando la colina-acetiltransferasa (ChAT)", correct: false, rationale: "Donepezilo actua aguas abajo de la sintesis: no afecta a ChAT ni a la produccion de ACh, solo inhibe su degradacion postsinaptica." },
+    ],
+  },
+  {
+    id: "d6",
+    title: "Biotecnologia Aplicada",
+    focus: "Terapia enzimatica de sustitucion",
+    proteinId: "gba",
+    proteinLabel: "Glucocerebrosidasa (GBA)",
+    question: "En enfermedad de Gaucher tipo 1, la imiglucerasa (GBA recombinante) se dirige especificamente a macrofagos. Que mecanismo celular hace posible esa diana selectiva?",
+    choices: [
+      { text: "El receptor de manosa en macrofagos capta la enzima glicosilada con manosa terminal expuesta", correct: true, rationale: "La imiglucerasa se modifica para exponer manosa terminal en sus cadenas oligosacararidas. Los macrofagos tienen receptores de manosa (CD206) de alta afinidad: captan la enzima por endocitosis mediada por receptor y la envian al lisosoma donde actua." },
+      { text: "La imiglucerasa cruza libremente cualquier membrana celular por difusion pasiva", correct: false, rationale: "Las proteinas de 67 kDa no difunden libremente a traves de membranas. Requieren un mecanismo activo de endocitosis para entrar a la celula." },
+      { text: "Se une a albumina plasmatica que la lleva especificamente al higado", correct: false, rationale: "Aunque el higado tiene macrofagos (celulas de Kupffer) que captan imiglucerasa, el mecanismo es el receptor de manosa, no la union a albumina." },
+    ],
+  },
+  {
+    id: "d7",
+    title: "Endocrinologia y Hueso",
+    focus: "Anabolismo oseo en osteoporosis",
+    proteinId: "pthr1",
+    proteinLabel: "Receptor PTH tipo 1 (PTH1R)",
+    question: "Por que la teriparatida (PTH 1-34) estimula la FORMACION osea si la PTH endogena elevada (hiperparatiroidismo) DESTRUYE el hueso?",
+    choices: [
+      { text: "La administracion intermitente (pulso diario) activa osteoblastos; la exposicion continua activa osteoclastos via RANKL", correct: true, rationale: "El PTH1R responde diferente segun el patron de estimulacion. Un pulso diario de teriparatida activa directamente la proliferacion osteoblastica (via PKA/Wnt). La exposicion continua cronifica la senalizacion RANKL, dominando la resorcion. El modo de administracion determina el efecto neto sobre el remodelado oseo." },
+      { text: "La teriparatida es un antagonista del receptor PTH que bloquea la resorcion", correct: false, rationale: "Teriparatida es un agonista completo de PTH1R, no un antagonista. Su accion anabolica depende del patron de exposicion, no del tipo de union al receptor." },
+      { text: "La teriparatida actua en un receptor diferente al de la PTH endogena", correct: false, rationale: "Ambas activan el mismo PTH1R. La diferencia esta en el patron temporal: pulsatil vs continuo, no en el receptor." },
+    ],
+  },
 ];
 
 export default function GamesPage() {
