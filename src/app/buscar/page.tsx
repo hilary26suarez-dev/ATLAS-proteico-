@@ -4,10 +4,14 @@ import atlasData from "@/data/protein_atlas.json";
 export default function SearchPage() {
   const allProteins = atlasData.modules.flatMap((mod) =>
     mod.proteins.map((p) => ({
+      fullName: "",
+      studentSummary: "",
+      npRelevance: "",
+      tags: [] as string[],
       ...p,
       moduleId: mod.id,
       moduleName: mod.name,
-      moduleIcon: mod.icon,
+      moduleIcon: (mod as { icon?: string }).icon ?? "",
       moduleColor: mod.id,
     }))
   );

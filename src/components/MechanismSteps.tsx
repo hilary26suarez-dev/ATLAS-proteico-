@@ -1,7 +1,7 @@
 "use client";
 
 interface Props {
-  mechanism: string;
+  mechanism?: string;
   color: string;
 }
 
@@ -13,9 +13,10 @@ function parseSteps(mechanism: string): string[] {
 }
 
 export default function MechanismSteps({ mechanism, color }: Props) {
-  const steps = parseSteps(mechanism);
+  const mech = mechanism ?? "";
+  const steps = parseSteps(mech);
 
-  const isPathway = mechanism.includes(" → ");
+  const isPathway = mech.includes(" → ");
 
   return (
     <div className="rounded-2xl p-6"

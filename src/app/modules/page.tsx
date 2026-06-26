@@ -37,14 +37,14 @@ export default function ModulesPage() {
               <div className={`bg-gradient-to-r ${s.moduleGradient} p-8 border-b border-slate-800/50`}>
                   <div className="flex flex-col lg:flex-row lg:items-start gap-6">
                     <div className="flex items-center gap-5">
-                      <div className="text-6xl">{mod.icon}</div>
+                      {(mod as { icon?: string }).icon && <div className="text-6xl">{(mod as { icon?: string }).icon}</div>}
                       <div>
                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold mb-3 ${s.badgeBg} ${s.badgeText} ${s.badgeBorder}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                           Módulo {String(idx + 1).padStart(2, "0")} · {mod.proteins.length} proteínas
                         </div>
                         <h2 className="text-3xl font-black text-white">{mod.name}</h2>
-                        <p className={`text-lg font-semibold mt-1 ${s.textColor}`}>{mod.subtitle}</p>
+                        {(mod as { subtitle?: string }).subtitle && <p className={`text-lg font-semibold mt-1 ${s.textColor}`}>{(mod as { subtitle?: string }).subtitle}</p>}
                       </div>
                     </div>
 
@@ -76,8 +76,8 @@ export default function ModulesPage() {
                     <div className="flex items-start gap-3">
                       <span className="text-xl mt-0.5">💊</span>
                       <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Contexto NP</p>
-                        <p className="text-sm text-slate-300 leading-relaxed">{mod.npContext}</p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Contexto Clínico</p>
+                        <p className="text-sm text-slate-300 leading-relaxed">{(mod as { npContext?: string }).npContext ?? mod.description}</p>
                       </div>
                     </div>
                   </div>

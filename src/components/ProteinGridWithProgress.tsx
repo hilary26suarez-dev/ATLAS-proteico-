@@ -7,13 +7,13 @@ import ModuleProgressBar from "./ModuleProgressBar";
 interface Protein {
   id: string;
   name: string;
-  fullName: string;
-  pdbId: string;
+  fullName?: string;
+  pdbId?: string;
   category: string;
   weight: string;
-  studentSummary: string;
-  npRelevance: string;
-  tags: string[];
+  studentSummary?: string;
+  npRelevance?: string;
+  tags?: string[];
 }
 
 interface StyleSet {
@@ -88,7 +88,7 @@ export default function ProteinGridWithProgress({ proteins, style: s, color }: P
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
-                {protein.tags.slice(0, 3).map((tag) => (
+                {(protein.tags ?? []).slice(0, 3).map((tag) => (
                   <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-500">
                     {tag}
                   </span>

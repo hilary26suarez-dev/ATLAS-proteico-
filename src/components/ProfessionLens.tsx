@@ -4,10 +4,10 @@ type Profession = "all" | "nursing" | "pharmacy" | "medicine" | "nutrition";
 
 interface ProteinData {
   name: string;
-  npRelevance: string;
-  clinicalContext: string;
-  mechanism: string;
-  ligands: string[];
+  npRelevance?: string;
+  clinicalContext?: string;
+  mechanism?: string;
+  ligands?: string[];
   pdbId: string;
   gene: string;
   location: string;
@@ -40,7 +40,7 @@ function getLensContent(profession: Profession, protein: ProteinData): { title: 
       `Acceso venoso: si ${name} está involucrada en el transporte de nutrientes, el catéter central debe estar permeado correctamente para evitar la pérdida del fármaco por adsorción al PVC.`,
       `Monitoreo visual de la bolsa: verificar la integridad de la emulsión (sin separación de fases, sin partículas) antes y durante la infusión. Reportar cualquier cambio de color o turbidez.`,
       `Velocidad de infusión: no alterar la tasa programada sin orden médica. Las proteínas de membrana como las que participan en ${protein.location} son sensibles a cambios bruscos de osmolaridad.`,
-      `Signos de alarma: ${protein.clinicalContext.split('.')[0]}.`,
+      `Signos de alarma: ${(protein.clinicalContext ?? "").split('.')[0] || "Evalúe signos de alarma según protocolo"}.`,
       `Filtros de infusión: para NP con lípidos usar filtro de 1.2 μm; sin lípidos, 0.22 μm. Verificar la fecha de cambio del set cada 24–72h.`,
     ],
   };
@@ -52,8 +52,8 @@ function getLensContent(profession: Profession, protein: ProteinData): { title: 
     points: [
       `Código PDB: ${protein.pdbId} — disponible para análisis de docking en AutoDock Vina o SwissDock.`,
       `Gen codificante: ${protein.gene}. Variantes en este gen pueden alterar la eficacia de fármacos que modulan esta proteína.`,
-      `Cofactores y ligandos relevantes: ${protein.ligands.slice(0, 4).join(', ')}. Verificar compatibilidad en la bolsa de NP.`,
-      `Mecanismo molecular (resumen): ${protein.mechanism.split('.')[0]}.`,
+      `Cofactores y ligandos relevantes: ${(protein.ligands ?? []).slice(0, 4).join(', ') || "Ver ficha detallada"}. Verificar compatibilidad en la bolsa de NP.`,
+      `Mecanismo molecular (resumen): ${((protein.mechanism ?? "").split('.')[0]) || "Consultar función molecular en el atlas"}.`,
       `Estabilidad en NP: la temperatura y el pH de la fórmula afectan la integridad de los cofactores. Preparar a <25°C y pH 6.0–7.0 para mayor estabilidad.`,
     ],
   };
@@ -63,11 +63,11 @@ function getLensContent(profession: Profession, protein: ProteinData): { title: 
     color: "#f5a623",
     icon: "🏥",
     points: [
-      `Contexto clínico: ${protein.clinicalContext}`,
-      `Implicación diagnóstica: la disfunción de ${name} se manifiesta como ${protein.npRelevance.split('.')[0]}.`,
+      `Contexto clínico: ${protein.clinicalContext ?? protein.npRelevance ?? "Ver relevancia clínica en el atlas"}`,
+      `Implicación diagnóstica: la disfunción de ${name} se manifiesta como ${((protein.npRelevance ?? "").split('.')[0]) || "disfunción clínica relevante"}.`,
       `Biomarcadores asociados: evaluar función de ${protein.gene} mediante los marcadores disponibles en HPA (Human Protein Atlas) y BioGPS para correlación pronóstica.`,
       `Interacciones farmacológicas: los fármacos co-administrados en NP (insulina, heparina, vitaminas) pueden interactuar con esta vía. Ver la sección de ligandos para detalles.`,
-      `Decisión NP: ${protein.npRelevance}`,
+      `Decisión NP: ${protein.npRelevance ?? "Consultar protocolo de NP para esta proteína"}`,
     ],
   };
 
@@ -76,9 +76,9 @@ function getLensContent(profession: Profession, protein: ProteinData): { title: 
     color: "#34d399",
     icon: "🥗",
     points: [
-      `Rol en NP: ${protein.npRelevance}`,
+      `Rol en NP: ${protein.npRelevance ?? "Ver relevancia en el atlas"}`,
       `Evaluación del estado nutricional: la expresión y actividad de ${name} está directamente influenciada por el aporte de macronutrientes y micronutrientes en la NP.`,
-      `Cofactores nutricionales: ${protein.ligands.filter(l => l.length < 30).slice(0, 3).join(', ')} son esenciales para la función de esta proteína. Su déficit en la fórmula de NP compromete la actividad enzimática.`,
+      `Cofactores nutricionales: ${(protein.ligands ?? []).filter(l => l.length < 30).slice(0, 3).join(', ') || "Ver ficha"} son esenciales para la función de esta proteína. Su déficit en la fórmula de NP compromete la actividad enzimática.`,
       `Requerimientos en NP: ajustar la fórmula según el estado catabolico. En estados inflamatorios severos, la función de ${name} puede estar comprometida independientemente del aporte.`,
       `Localización celular: ${protein.location} — importante para entender la biodisponibilidad de los nutrientes administrados.`,
     ],

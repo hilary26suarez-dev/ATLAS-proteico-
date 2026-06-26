@@ -7,14 +7,14 @@ import { useMemo, useState } from "react";
 interface Protein {
   id: string;
   name: string;
-  fullName: string;
+  fullName?: string;
   pdbId?: string;
   gene: string;
   category: string;
   weight: string;
-  studentSummary: string;
-  npRelevance: string;
-  tags: string[];
+  studentSummary?: string;
+  npRelevance?: string;
+  tags?: string[];
   moduleId: string;
   moduleName: string;
   moduleIcon: string;
@@ -48,12 +48,12 @@ export default function SearchClient({ proteins }: { proteins: Protein[] }) {
     return proteins.filter((p) => {
       const matchQuery = !q ||
         p.name.toLowerCase().includes(q) ||
-        p.fullName.toLowerCase().includes(q) ||
+        (p.fullName ?? "").toLowerCase().includes(q) ||
         p.gene.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
-        p.studentSummary.toLowerCase().includes(q) ||
-        p.npRelevance.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q));
+        (p.studentSummary ?? "").toLowerCase().includes(q) ||
+        (p.npRelevance ?? "").toLowerCase().includes(q) ||
+        (p.tags ?? []).some((t) => t.toLowerCase().includes(q));
       const matchCat = category === "Todas" || p.category === category;
       const matchMod = moduleFilter === "todos" || p.moduleId === moduleFilter;
       return matchQuery && matchCat && matchMod;
@@ -172,10 +172,10 @@ export default function SearchClient({ proteins }: { proteins: Protein[] }) {
                     {p.moduleIcon}
                   </span>
                 </div>
-                <p className="text-sm text-slate-300 font-medium mb-2 leading-tight">{p.fullName}</p>
+                {p.fullName && <p className="text-sm text-slate-300 font-medium mb-2 leading-tight">{p.fullName}</p>}
                 <p className="text-xs text-slate-500 mb-3 line-clamp-2 leading-relaxed">{p.studentSummary}</p>
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  {p.tags.slice(0, 3).map((t) => (
+                  {(p.tags ?? []).slice(0, 3).map((t) => (
                     <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-slate-800/60 text-slate-500">
                       {t}
                     </span>

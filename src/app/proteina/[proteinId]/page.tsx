@@ -64,7 +64,7 @@ export default async function ProteinDetailPage({ params }: Props) {
                     <h1 className="text-4xl sm:text-5xl font-black">
                       <span className={mc.textColor}>{protein.name}</span>
                     </h1>
-                    <p className="text-xl text-slate-300 font-medium mt-1">{protein.fullName}</p>
+                    <p className="text-xl text-slate-300 font-medium mt-1">{(protein as { fullName?: string }).fullName ?? ""}</p>
                   </div>
                 </div>
 
@@ -96,9 +96,9 @@ export default async function ProteinDetailPage({ params }: Props) {
 
               {/* Quick links */}
               <div className="flex flex-col gap-2 min-w-[200px]">
-                {protein.pdbUrl && (
+                {((protein as { pdbUrl?: string }).pdbUrl ?? (protein.pdbId ? `https://www.rcsb.org/structure/${protein.pdbId}` : null)) && (
                   <a
-                    href={protein.pdbUrl}
+                    href={(protein as { pdbUrl?: string }).pdbUrl ?? `https://www.rcsb.org/structure/${protein.pdbId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-300 text-sm font-medium hover:border-slate-500 hover:text-white transition-all"
@@ -110,7 +110,7 @@ export default async function ProteinDetailPage({ params }: Props) {
                   </a>
                 )}
                 <a
-                  href={protein.alphafoldUrl}
+                  href={(protein as { alphafoldUrl?: string }).alphafoldUrl ?? `https://alphafold.ebi.ac.uk/entry/${protein.uniprotId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 text-sm font-medium hover:opacity-80 transition-opacity"
@@ -145,6 +145,7 @@ export default async function ProteinDetailPage({ params }: Props) {
             badgeText: mc.badgeText,
             dot: mc.dot,
             border: mc.detailBorder,
+            color: mc.color,
           }}
           moduleId={parentModule.id}
         />

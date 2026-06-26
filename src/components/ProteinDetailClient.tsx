@@ -12,6 +12,7 @@ import MiniQuiz from "./MiniQuiz";
 import ModeToggle from "./ModeToggle";
 import ProfessionLens from "./ProfessionLens";
 import ProteinMPNNPanel from "./ProteinMPNNPanel";
+import ProteinStructureFallback from "./ProteinStructureFallback";
 
 const ProteinViewer3D = dynamic(() => import("./ProteinViewer3D"), {
   ssr: false,
@@ -42,16 +43,16 @@ export interface ProteinDetailData {
   npRelevance: string;
   clinicalContext: string;
   mechanism: string;
-  ligands: string[];
-  pdbUrl: string;
-  alphafoldUrl: string;
-  pubmedId: string;
-  tags: string[];
+  ligands?: string[];
+  pdbUrl?: string;
+  alphafoldUrl?: string;
+  pubmedId?: string;
+  tags?: string[];
 }
 
 interface Props {
   protein: ProteinDetailData;
-  moduleColor: { text: string; badge: string; badgeText: string; dot: string; border: string };
+  moduleColor: { text: string; badge: string; badgeText: string; dot: string; border: string; color: string };
   moduleId: string;
 }
 
@@ -59,12 +60,23 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
   const [mode, setMode] = useState<"student" | "researcher">("student");
   const [profession, setProfession] = useState<"all" | "nursing" | "pharmacy" | "medicine" | "nutrition">("all");
   const { markVisited } = useProgress();
+  const hasRenderable3D = Boolean(protein.pdbId || protein.alphafoldId);
   const hasExperimentalStructure = Boolean(protein.pdbId);
-  const primaryStructureLabel = hasExperimentalStructure ? protein.pdbId : `AF-${protein.alphafoldId}`;
-  const primaryStructureSource = hasExperimentalStructure ? "RCSB PDB" : "AlphaFold DB";
+  const primaryStructureLabel = hasExperimentalStructure
+    ? protein.pdbId
+    : protein.alphafoldId
+      ? `AF-${protein.alphafoldId}`
+      : "Sin estructura 3D";
+  const primaryStructureSource = hasExperimentalStructure
+    ? "RCSB PDB"
+    : protein.alphafoldId
+      ? "AlphaFold DB"
+      : "Resumen mecanístico";
   const primaryStructureUrl = hasExperimentalStructure
     ? protein.pdbUrl
-    : `https://alphafold.ebi.ac.uk/files/AF-${protein.alphafoldId}-F1-model_v4.pdb`;
+    : protein.alphafoldId
+      ? `https://alphafold.ebi.ac.uk/files/AF-${protein.alphafoldId}-F1-model_v4.pdb`
+      : "";
 
   useEffect(() => {
     markVisited(protein.id);
@@ -102,14 +114,16 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
             <span className="text-slate-600 text-xs">· {primaryStructureSource}</span>
           </div>
           <div className="flex gap-2">
-            <a
-              href={primaryStructureUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition-colors"
-            >
-              {hasExperimentalStructure ? "Ver en PDB ↗" : "Descargar modelo ↗"}
-            </a>
+            {hasRenderable3D && (
+              <a
+                href={primaryStructureUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition-colors"
+              >
+                {hasExperimentalStructure ? "Ver en PDB ↗" : "Descargar modelo ↗"}
+              </a>
+            )}
             {mode === "researcher" && (
               <a
                 href={protein.alphafoldUrl}
@@ -123,12 +137,24 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
           </div>
         </div>
         <div style={{ height: 540 }}>
-          <ProteinViewer3D
-            pdbId={protein.pdbId}
-            alphafoldId={protein.alphafoldId}
-            proteinName={protein.name}
-            mode={mode}
-          />
+          {hasExperimentalStructure ? (
+            <ProteinViewer3D
+              pdbId={protein.pdbId}
+              alphafoldId={protein.alphafoldId}
+              proteinName={protein.name}
+              mode={mode}
+            />
+          ) : (
+            <ProteinStructureFallback
+              alphafoldId={protein.alphafoldId}
+              uniprotId={protein.uniprotId}
+              proteinName={protein.name}
+              category={protein.category}
+              weight={protein.weight}
+              location={protein.location}
+              color={mc.color}
+            />
+          )}
         </div>
       </div>
 
@@ -252,7 +278,7 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
           {/* Ligandos enriquecidos */}
           <div className="md:col-span-2 glass rounded-2xl border border-violet-500/15 p-6">
             <h3 className="text-sm font-bold text-violet-400 mb-4">⚗️ Ligandos, Sustratos y Cofactores</h3>
-            <LigandsPanel ligands={protein.ligands} />
+            <LigandsPanel ligands={protein.ligands ?? []} />
           </div>
 
           {/* Recursos externos */}
@@ -292,7 +318,7 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
               <div className="p-3 rounded-xl" style={{ background: "var(--bg-raised)" }}>
                 <p className="text-xs mb-2" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>TAGS FUNCIONALES</p>
                 <div className="flex flex-wrap gap-1">
-                  {protein.tags.map((tag) => (
+                  {(protein.tags ?? []).map((tag) => (
                     <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
                       {tag}
@@ -316,7 +342,7 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
               pdbId={protein.pdbId}
               proteinName={protein.name}
               uniprotId={protein.uniprotId}
-              hasLigands={protein.ligands.length > 1}
+              hasLigands={(protein.ligands?.length ?? 0) > 1}
             />
           </div>
         </div>
@@ -345,7 +371,7 @@ export default function ProteinDetailClient({ protein, moduleColor: mc, moduleId
 
       {/* Tags */}
       <div className="mt-4 flex flex-wrap gap-2">
-        {protein.tags.map((tag) => (
+        {(protein.tags ?? []).map((tag) => (
           <span key={tag} className="px-3 py-1 rounded-full bg-slate-800/60 border border-slate-700/50 text-slate-400 text-xs">
             #{tag}
           </span>

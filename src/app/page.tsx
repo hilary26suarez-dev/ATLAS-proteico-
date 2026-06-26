@@ -52,11 +52,11 @@ export default function Home() {
                   style={{ background: "var(--teal)" }} />
                 <p className="text-base sm:text-lg leading-relaxed"
                   style={{ color: "var(--text-muted)" }}>
-                  Visualiza en{" "}
-                  <span className="font-semibold" style={{ color: "var(--text)" }}>3D interactivo</span>{" "}
-                  las proteínas que sostienen la{" "}
-                  <span className="font-semibold" style={{ color: "var(--amber)" }}>Nutrición Parenteral</span>.
-                  {" "}Contexto clínico real para médicos, farmacéuticos y nutricionistas.
+                  <span className="font-semibold" style={{ color: "var(--text)" }}>195 proteínas</span>{" "}
+                  en 17 módulos con visualización{" "}
+                  <span className="font-semibold" style={{ color: "var(--teal)" }}>3D interactiva</span>.
+                  {" "}Atlas multidisciplinario para{" "}
+                  <span className="font-semibold" style={{ color: "var(--amber)" }}>Medicina, Farmacia, Nutrición y Biotecnología</span>.
                 </p>
               </div>
 
@@ -64,6 +64,9 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 <Link href="/modules" className="btn-primary">
                   Explorar módulos →
+                </Link>
+                <Link href="/disciplinas" className="btn-outline">
+                  Por disciplina
                 </Link>
                 <Link href="/buscar" className="btn-outline">
                   Buscar proteína

@@ -43,10 +43,10 @@ export default async function ModuleDetailPage({ params }: Props) {
                   {mod.proteins.length} proteínas en este módulo
                 </div>
                 <div className="flex items-center gap-4 mb-3">
-                  <span className="text-6xl">{mod.icon}</span>
+                  {(mod as { icon?: string }).icon && <span className="text-6xl">{(mod as { icon?: string }).icon}</span>}
                   <div>
                     <h1 className="text-4xl font-black text-white">{mod.name}</h1>
-                    <p className={`text-xl font-semibold ${s.textColor}`}>{mod.subtitle}</p>
+                    {(mod as { subtitle?: string }).subtitle && <p className={`text-xl font-semibold ${s.textColor}`}>{(mod as { subtitle?: string }).subtitle}</p>}
                   </div>
                 </div>
                 <p className="text-slate-300 text-lg leading-relaxed mt-4 max-w-3xl">{mod.description}</p>
@@ -61,8 +61,8 @@ export default async function ModuleDetailPage({ params }: Props) {
                 💊
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Relevancia en Nutrición Parenteral</p>
-                <p className="text-slate-300 leading-relaxed">{mod.npContext}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Relevancia Clínica y Molecular</p>
+                <p className="text-slate-300 leading-relaxed">{(mod as { npContext?: string; description?: string }).npContext ?? mod.description}</p>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default async function ModuleDetailPage({ params }: Props) {
                   className={`glass rounded-xl border ${os.cardBorder} p-4 card-hover group transition-all`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{om.icon}</span>
+                    {(om as { icon?: string }).icon && <span className="text-2xl">{(om as { icon?: string }).icon}</span>}
                     <div>
                       <p className={`text-sm font-bold ${os.textColor}`}>{om.name}</p>
                       <p className="text-xs text-slate-500">{om.proteins.length} proteínas</p>

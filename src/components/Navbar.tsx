@@ -7,11 +7,15 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/",             label: "Inicio" },
   { href: "/modules",      label: "Módulos" },
+  { href: "/disciplinas",  label: "Disciplinas" },
+  { href: "/explorador",   label: "Explorador" },
+  { href: "/alphafold",    label: "AlphaFold" },
+  { href: "/casos-clinicos", label: "Casos clínicos" },
+  { href: "/games",        label: "Entrenamiento" },
   { href: "/vitaminas",    label: "Vitaminas" },
   { href: "/osmolaridad",  label: "Osmolaridad" },
   { href: "/simulador",    label: "Simulador" },
   { href: "/docking",      label: "Docking" },
-  { href: "/casos",        label: "Casos" },
   { href: "/quiz",         label: "Quiz" },
   { href: "/buscar",       label: "Buscar" },
 ];
